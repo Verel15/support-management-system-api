@@ -15,31 +15,50 @@ Best practices and patterns for Spring Boot applications.
 ## Project Structure
 
 ```
-src/main/java/com/example/myapp/
-├── MyAppApplication.java          # @SpringBootApplication
-├── config/                        # Configuration classes
+src/main/java/com/company/ticketsystem/
+│
+├── config/                    ← Cross-cutting configuration
 │   ├── SecurityConfig.java
-│   └── WebConfig.java
-├── controller/                    # REST controllers
-│   └── UserController.java
-├── service/                       # Business logic
-│   ├── UserService.java
-│   └── impl/
-│       └── UserServiceImpl.java
-├── repository/                    # Data access
-│   └── UserRepository.java
-├── model/                         # Entities
-│   └── User.java
-├── dto/                           # Data transfer objects
-│   ├── request/
-│   │   └── CreateUserRequest.java
-│   └── response/
-│       └── UserResponse.java
-├── exception/                     # Custom exceptions
-│   ├── ResourceNotFoundException.java
-│   └── GlobalExceptionHandler.java
-└── util/                          # Utilities
-    └── DateUtils.java
+│   ├── CorsConfig.java
+│   ├── SwaggerConfig.java
+│   └── AuditConfig.java
+│
+├── common/                    ← Shared utilities across the whole app
+│   ├── exception/
+│   │   ├── GlobalExceptionHandler.java   ← @RestControllerAdvice
+│   │   ├── AppException.java
+│   │   └── ErrorCode.java                ← enum ของ error codes ทั้งหมด
+│   ├── response/
+│   │   └── ApiResponse.java              ← wrapper { data, message, status }
+│   └── util/
+│
+├── domain/                    ← Core business — แบ่งตาม feature
+│   ├── ticket/
+│   │   ├── TicketController.java
+│   │   ├── TicketService.java
+│   │   ├── TicketRepository.java
+│   │   ├── Ticket.java                   ← @Entity
+│   │   └── dto/
+│   │       ├── TicketRequest.java
+│   │       └── TicketResponse.java
+│   ├── project/
+│   │   ├── ProjectController.java
+│   │   ├── ...
+│   ├── user/
+│   ├── notification/
+│   ├── company/
+│   └── auth/
+│       ├── AuthController.java
+│       ├── AuthService.java
+│       └── dto/
+│           ├── LoginRequest.java
+│           └── TokenResponse.java
+│
+└── infrastructure/            ← External systems (email, storage, etc.)
+    ├── email/
+    │   └── EmailService.java
+    └── storage/
+        └── FileStorageService.java
 ```
 
 ---
