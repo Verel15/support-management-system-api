@@ -38,6 +38,8 @@ out/
 
 # Env
 .env
+*-local.yaml
+*-local.yml
 
 # Logs
 logs/

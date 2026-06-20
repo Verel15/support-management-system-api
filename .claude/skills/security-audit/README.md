@@ -25,7 +25,7 @@ Java security checklist based on OWASP Top 10 and secure coding practices. Frame
 | Topic | Applies To |
 |-------|------------|
 | **Input Validation** | All Java (Bean Validation JSR 380) |
-| **SQL Injection** | JPA, Hibernate, JDBC |
+| **SQL Injection** | JPA, Hibernate, JDBC, Querydsl |
 | **XSS Prevention** | Web applications |
 | **CSRF Protection** | Spring, Quarkus |
 | **Authentication** | All frameworks |
