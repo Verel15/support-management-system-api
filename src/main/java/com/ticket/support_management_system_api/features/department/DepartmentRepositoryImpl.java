@@ -1,0 +1,56 @@
+package com.ticket.support_management_system_api.features.department;
+
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.ticket.support_management_system_api.features.department.entities.QDepartment;
+import com.ticket.support_management_system_api.features.department.entities.Department;
+
+import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@RequiredArgsConstructor
+public class DepartmentRepositoryImpl implements DepartmentRepositoryCustom {
+
+    private final JPAQueryFactory queryFactory;
+    private final QDepartment q = QDepartment.department;
+
+    @Override
+    public Optional<Department> findByName(String name) {
+        return Optional.ofNullable(
+                queryFactory.selectFrom(q)
+                        .where(q.name.eq(name))
+                        .fetchOne()
+        );
+    }
+
+    @Override
+    public List<Department> findAllOrderByNameAsc() {
+        return queryFactory.selectFrom(q)
+                .orderBy(q.name.asc())
+                .fetch();
+    }
+
+    @Override
+    public List<Department> findAllActiveOrderByNameAsc() {
+        return queryFactory.selectFrom(q)
+                .where(q.archivedAt.isNull())
+                .orderBy(q.name.asc())
+                .fetch();
+    }
+
+    @Override
+    public boolean existsByName(String name) {
+        return queryFactory.selectFrom(q)
+                .where(q.name.eq(name))
+                .fetchFirst() != null;
+    }
+
+    @Override
+    public boolean existsByNameAndIdNot(String name, UUID id) {
+        return queryFactory.selectFrom(q)
+                .where(q.name.eq(name).and(q.id.ne(id)))
+                .fetchFirst() != null;
+    }
+}
