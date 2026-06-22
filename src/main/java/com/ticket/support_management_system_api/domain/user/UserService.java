@@ -22,6 +22,7 @@ import com.ticket.support_management_system_api.domain.user_type.UserTypeReposit
 import com.ticket.support_management_system_api.domain.user_type.entities.UserType;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -50,7 +54,15 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public PageResponse<UserResponse> findAll(UserFilterRequest filter, Pageable pageable) {
-        return PaginationUtils.toPageResponse(userRepository.findAllActive(filter, pageable), this::toResponse);
+        Page<User> page = userRepository.findAllActive(filter, pageable);
+        List<UUID> ids = page.getContent().stream().map(User::getId).toList();
+
+        Map<UUID, CustomerDetails> customerMap = customerDetailsRepository.findAllByUserIdIn(ids)
+                .stream().collect(Collectors.toMap(CustomerDetails::getUserId, cd -> cd));
+        Map<UUID, ExternalDetails> externalMap = externalDetailsRepository.findAllByUserIdIn(ids)
+                .stream().collect(Collectors.toMap(ExternalDetails::getUserId, ed -> ed));
+
+        return PaginationUtils.toPageResponse(page, user -> toResponse(user, customerMap, externalMap));
     }
 
     @Transactional(readOnly = true)
@@ -165,6 +177,18 @@ public class UserService {
     }
 
     private UserResponse toResponse(User user) {
+        CustomerDetails cd = user.getAccountType() == AccountType.CUSTOMER
+                ? customerDetailsRepository.findById(user.getId()).orElse(null) : null;
+        ExternalDetails ed = user.getAccountType() == AccountType.EXTERNAL
+                ? externalDetailsRepository.findById(user.getId()).orElse(null) : null;
+        return buildResponse(user, cd, ed);
+    }
+
+    private UserResponse toResponse(User user, Map<UUID, CustomerDetails> customerMap, Map<UUID, ExternalDetails> externalMap) {
+        return buildResponse(user, customerMap.get(user.getId()), externalMap.get(user.getId()));
+    }
+
+    private UserResponse buildResponse(User user, CustomerDetails cd, ExternalDetails ed) {
         UserResponse.UserResponseBuilder builder = UserResponse.builder()
                 .id(user.getId())
                 .accountType(user.getAccountType())
@@ -177,32 +201,23 @@ public class UserService {
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt());
 
-        if (user.getAccountType() == AccountType.CUSTOMER) {
-            customerDetailsRepository.findById(user.getId()).ifPresent(cd -> {
-                Company c = cd.getCompany();
-                if (c != null) {
-                    builder.companyId(c.getId());
-                    builder.companyName(c.getName());
-                }
-            });
-        } else if (user.getAccountType() == AccountType.EXTERNAL) {
-            externalDetailsRepository.findById(user.getId()).ifPresent(ed -> {
-                UserType ut = ed.getUserType();
-                if (ut != null) {
-                    builder.userTypeId(ut.getId());
-                    builder.userTypeName(ut.getName());
-                }
-                Department dept = ed.getDepartment();
-                if (dept != null) {
-                    builder.departmentId(dept.getId());
-                    builder.departmentName(dept.getName());
-                }
-                Position pos = ed.getPosition();
-                if (pos != null) {
-                    builder.positionId(pos.getId());
-                    builder.positionName(pos.getName());
-                }
-            });
+        if (cd != null && cd.getCompany() != null) {
+            builder.companyId(cd.getCompany().getId());
+            builder.companyName(cd.getCompany().getName());
+        }
+        if (ed != null) {
+            if (ed.getUserType() != null) {
+                builder.userTypeId(ed.getUserType().getId());
+                builder.userTypeName(ed.getUserType().getName());
+            }
+            if (ed.getDepartment() != null) {
+                builder.departmentId(ed.getDepartment().getId());
+                builder.departmentName(ed.getDepartment().getName());
+            }
+            if (ed.getPosition() != null) {
+                builder.positionId(ed.getPosition().getId());
+                builder.positionName(ed.getPosition().getName());
+            }
         }
 
         return builder.build();

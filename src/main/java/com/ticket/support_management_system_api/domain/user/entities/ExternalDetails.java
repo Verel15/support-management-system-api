@@ -11,7 +11,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "external_details ")
+@Table(name = "external_details")
 @Getter
 @Setter
 @NoArgsConstructor
