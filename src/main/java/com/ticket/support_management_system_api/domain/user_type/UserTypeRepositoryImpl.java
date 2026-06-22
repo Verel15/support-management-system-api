@@ -1,6 +1,9 @@
 package com.ticket.support_management_system_api.domain.user_type;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.ticket.support_management_system_api.domain.user_type.entities.UserType;
+import com.ticket.support_management_system_api.domain.user_type.entities.QUserType;
+
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;

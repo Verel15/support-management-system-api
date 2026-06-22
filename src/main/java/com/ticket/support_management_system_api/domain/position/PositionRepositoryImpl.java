@@ -1,6 +1,9 @@
 package com.ticket.support_management_system_api.domain.position;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.ticket.support_management_system_api.domain.position.entities.Position;
+import com.ticket.support_management_system_api.domain.position.entities.QPosition;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;

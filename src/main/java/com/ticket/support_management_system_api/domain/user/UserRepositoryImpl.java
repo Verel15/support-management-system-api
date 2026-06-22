@@ -3,6 +3,9 @@ package com.ticket.support_management_system_api.domain.user;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.ticket.support_management_system_api.domain.user.dto.UserFilterRequest;
+import com.ticket.support_management_system_api.domain.user.entities.User;
+import com.ticket.support_management_system_api.domain.user.entities.QUser;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;

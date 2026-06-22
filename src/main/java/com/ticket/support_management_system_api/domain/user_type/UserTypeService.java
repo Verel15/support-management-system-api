@@ -4,6 +4,8 @@ import com.ticket.support_management_system_api.common.exception.DuplicateResour
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
 import com.ticket.support_management_system_api.domain.user_type.dto.UserTypeRequest;
 import com.ticket.support_management_system_api.domain.user_type.dto.UserTypeResponse;
+import com.ticket.support_management_system_api.domain.user_type.entities.UserType;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

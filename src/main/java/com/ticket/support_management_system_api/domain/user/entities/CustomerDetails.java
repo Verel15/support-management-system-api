@@ -1,8 +1,8 @@
-package com.ticket.support_management_system_api.domain.user;
+package com.ticket.support_management_system_api.domain.user.entities;
 
 import java.util.UUID;
 
-import com.ticket.support_management_system_api.domain.company.Company;
+import com.ticket.support_management_system_api.domain.company.entities.Company;
 
 import jakarta.persistence.*;
 import lombok.*;

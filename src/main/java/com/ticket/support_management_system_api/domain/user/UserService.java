@@ -6,17 +6,21 @@ import com.ticket.support_management_system_api.common.exception.DuplicateResour
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.common.utils.PaginationUtils;
-import com.ticket.support_management_system_api.domain.company.Company;
 import com.ticket.support_management_system_api.domain.company.CompanyRepository;
-import com.ticket.support_management_system_api.domain.department.Department;
+import com.ticket.support_management_system_api.domain.company.entities.Company;
 import com.ticket.support_management_system_api.domain.department.DepartmentRepository;
-import com.ticket.support_management_system_api.domain.position.Position;
+import com.ticket.support_management_system_api.domain.department.entities.Department;
 import com.ticket.support_management_system_api.domain.position.PositionRepository;
+import com.ticket.support_management_system_api.domain.position.entities.Position;
 import com.ticket.support_management_system_api.domain.user.dto.UserFilterRequest;
 import com.ticket.support_management_system_api.domain.user.dto.UserRequest;
 import com.ticket.support_management_system_api.domain.user.dto.UserResponse;
-import com.ticket.support_management_system_api.domain.user_type.UserType;
+import com.ticket.support_management_system_api.domain.user.entities.CustomerDetails;
+import com.ticket.support_management_system_api.domain.user.entities.ExternalDetails;
+import com.ticket.support_management_system_api.domain.user.entities.User;
 import com.ticket.support_management_system_api.domain.user_type.UserTypeRepository;
+import com.ticket.support_management_system_api.domain.user_type.entities.UserType;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;

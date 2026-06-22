@@ -1,4 +1,4 @@
-package com.ticket.support_management_system_api.domain.user;
+package com.ticket.support_management_system_api.domain.user.entities;
 
 import com.ticket.support_management_system_api.common.entity.BaseEntity;
 import com.ticket.support_management_system_api.common.enums.AccountType;

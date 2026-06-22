@@ -2,15 +2,15 @@ package com.ticket.support_management_system_api.domain.position;
 
 import com.ticket.support_management_system_api.common.exception.DuplicateResourceException;
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
-import com.ticket.support_management_system_api.common.response.PageResponse;
-import com.ticket.support_management_system_api.common.utils.PaginationUtils;
 import com.ticket.support_management_system_api.domain.position.dto.PositionRequest;
 import com.ticket.support_management_system_api.domain.position.dto.PositionResponse;
+import com.ticket.support_management_system_api.domain.position.entities.Position;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -21,8 +21,11 @@ public class PositionService {
     private final PositionRepository positionRepository;
 
     @Transactional(readOnly = true)
-    public PageResponse<PositionResponse> findAll(Pageable pageable) {
-        return PaginationUtils.toPageResponse(positionRepository.findAllActive(pageable), this::toResponse);
+    public List<PositionResponse> findAll() {
+        return positionRepository.findAllActiveOrderByNameAsc()
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     @Transactional(readOnly = true)

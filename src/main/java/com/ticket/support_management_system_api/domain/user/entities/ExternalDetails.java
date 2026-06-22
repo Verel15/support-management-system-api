@@ -1,11 +1,11 @@
-package com.ticket.support_management_system_api.domain.user;
+package com.ticket.support_management_system_api.domain.user.entities;
 
 
 import java.util.UUID;
 
-import com.ticket.support_management_system_api.domain.department.Department;
-import com.ticket.support_management_system_api.domain.position.Position;
-import com.ticket.support_management_system_api.domain.user_type.UserType;
+import com.ticket.support_management_system_api.domain.department.entities.Department;
+import com.ticket.support_management_system_api.domain.position.entities.Position;
+import com.ticket.support_management_system_api.domain.user_type.entities.UserType;
 
 import jakarta.persistence.*;
 import lombok.*;

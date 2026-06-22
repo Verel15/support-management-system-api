@@ -1,4 +1,4 @@
-package com.ticket.support_management_system_api.domain.company;
+package com.ticket.support_management_system_api.domain.company.entities;
 
 import jakarta.persistence.*;
 import lombok.*;

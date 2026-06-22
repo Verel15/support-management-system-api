@@ -1,6 +1,9 @@
 package com.ticket.support_management_system_api.domain.department;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.ticket.support_management_system_api.domain.department.entities.Department;
+import com.ticket.support_management_system_api.domain.department.entities.QDepartment;
+
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
