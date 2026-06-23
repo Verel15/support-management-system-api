@@ -12,6 +12,15 @@ spring:
     show-sql: false
     open-in-view: false
 
+application:
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+      issuer: support-management-system-api
+      audience: support-management-system-api-client
+      access-token-expiration: 900000
+      refresh-token-expiration: 2592000000
+
 springdoc:
   api-docs:
     path: /v3/api-docs
