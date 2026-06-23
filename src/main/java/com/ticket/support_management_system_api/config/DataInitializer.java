@@ -2,11 +2,11 @@ package com.ticket.support_management_system_api.config;
 
 import com.ticket.support_management_system_api.common.enums.AccountType;
 import com.ticket.support_management_system_api.common.enums.CommonStatus;
-import com.ticket.support_management_system_api.features.user.ExternalDetailsRepository;
-import com.ticket.support_management_system_api.features.user.UserRepository;
 import com.ticket.support_management_system_api.features.user.entities.ExternalDetails;
 import com.ticket.support_management_system_api.features.user.entities.User;
-import com.ticket.support_management_system_api.features.user_type.UserTypeRepository;
+import com.ticket.support_management_system_api.features.user.repository.ExternalDetailsRepository;
+import com.ticket.support_management_system_api.features.user.repository.UserRepository;
+import com.ticket.support_management_system_api.features.user_type.repository.UserTypeRepository;
 import com.ticket.support_management_system_api.features.user_type.entities.UserType;
 import com.ticket.support_management_system_api.features.user_type.enums.MyTicketAccess;
 import lombok.RequiredArgsConstructor;

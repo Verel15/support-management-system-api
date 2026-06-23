@@ -1,0 +1,41 @@
+package com.ticket.support_management_system_api.features.user.repository;
+
+import com.ticket.support_management_system_api.features.user.dto.UserFilterRequest;
+import com.ticket.support_management_system_api.features.user.entities.User;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+public class UserSpecification {
+
+    public static Specification<User> active(UserFilterRequest filter) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.isNull(root.get("archivedAt")));
+
+            if (filter.getAccountType() != null) {
+                predicates.add(cb.equal(root.get("accountType"), filter.getAccountType()));
+            }
+
+            if (filter.getCreatedWithinDays() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"),
+                        LocalDateTime.now().minusDays(filter.getCreatedWithinDays())));
+            }
+
+            if (filter.getKeyword() != null && !filter.getKeyword().isBlank()) {
+                String kw = "%" + filter.getKeyword().trim().toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("firstName")), kw),
+                        cb.like(cb.lower(root.get("lastName")), kw),
+                        cb.like(cb.lower(root.get("email")), kw),
+                        cb.like(cb.lower(cb.concat(cb.concat(root.get("firstName"), " "), root.get("lastName"))), kw)
+                ));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+}
