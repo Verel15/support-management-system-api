@@ -18,7 +18,7 @@ application:
       secret: ${JWT_SECRET}
       issuer: support-management-system-api
       audience: support-management-system-api-client
-      access-token-expiration: 900000
+      access-token-expiration: 3600000
       refresh-token-expiration: 2592000000
 
 springdoc:

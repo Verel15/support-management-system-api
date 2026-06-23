@@ -2,16 +2,19 @@ package com.ticket.support_management_system_api.features.user_type.service;
 
 import com.ticket.support_management_system_api.common.exception.DuplicateResourceException;
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
+import com.ticket.support_management_system_api.common.response.PageResponse;
+import com.ticket.support_management_system_api.common.utils.PaginationUtils;
 import com.ticket.support_management_system_api.features.user_type.dto.UserTypeRequest;
 import com.ticket.support_management_system_api.features.user_type.dto.UserTypeResponse;
 import com.ticket.support_management_system_api.features.user_type.entities.UserType;
 import com.ticket.support_management_system_api.features.user_type.repository.UserTypeRepository;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -21,11 +24,12 @@ public class UserTypeService {
     private final UserTypeRepository userTypeRepository;
 
     @Transactional(readOnly = true)
-    public List<UserTypeResponse> findAll() {
-        return userTypeRepository.findAllByArchivedAtIsNullOrderByNameAsc()
-                .stream()
-                .map(this::toResponse)
-                .toList();
+    public PageResponse<UserTypeResponse> findAll(int page, int size, String name) {
+        Pageable pageable = PageRequest.of(page, size);
+        var result = (name != null && !name.isBlank())
+                ? userTypeRepository.findAllByArchivedAtIsNullAndNameContainingIgnoreCaseOrderByNameAsc(name, pageable)
+                : userTypeRepository.findAllByArchivedAtIsNullOrderByNameAsc(pageable);
+        return PaginationUtils.toPageResponse(result, this::toResponse);
     }
 
     @Transactional(readOnly = true)

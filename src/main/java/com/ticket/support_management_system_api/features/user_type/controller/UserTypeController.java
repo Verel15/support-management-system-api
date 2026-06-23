@@ -1,6 +1,7 @@
 package com.ticket.support_management_system_api.features.user_type.controller;
 
 import com.ticket.support_management_system_api.common.response.ApiResponse;
+import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.features.user_type.dto.UserTypeRequest;
 import com.ticket.support_management_system_api.features.user_type.dto.UserTypeResponse;
 import com.ticket.support_management_system_api.features.user_type.service.UserTypeService;
@@ -10,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -22,8 +21,11 @@ public class UserTypeController {
     private final UserTypeService userTypeService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<UserTypeResponse>>> findAll() {
-        return ResponseEntity.ok(ApiResponse.success(userTypeService.findAll()));
+    public ResponseEntity<ApiResponse<PageResponse<UserTypeResponse>>> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String name) {
+        return ResponseEntity.ok(ApiResponse.success(userTypeService.findAll(page, size, name)));
     }
 
     @GetMapping("/{id}")

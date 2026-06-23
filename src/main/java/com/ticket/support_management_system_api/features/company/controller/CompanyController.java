@@ -1,6 +1,7 @@
 package com.ticket.support_management_system_api.features.company.controller;
 
 import com.ticket.support_management_system_api.common.response.ApiResponse;
+import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.company.dto.CompanyRequest;
 import com.ticket.support_management_system_api.features.company.dto.CompanyResponse;
 import com.ticket.support_management_system_api.features.company.service.CompanyService;
@@ -9,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +24,7 @@ public class CompanyController {
     private final CompanyService companyService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<CompanyResponse>>> findAll() {
+    public ResponseEntity<ApiResponse<List<CompanyResponse>>> findAll(@AuthenticationPrincipal JwtPrincipal user) {
         return ResponseEntity.ok(ApiResponse.success(companyService.findAll()));
     }
 
