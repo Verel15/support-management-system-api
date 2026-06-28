@@ -17,7 +17,6 @@ import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal
 import com.ticket.support_management_system_api.features.auth.repository.RefreshTokenRepository;
 import com.ticket.support_management_system_api.features.user.repository.ExternalDetailsRepository;
 import com.ticket.support_management_system_api.features.user.repository.UserRepository;
-import com.ticket.support_management_system_api.features.user.entities.ExternalDetails;
 import com.ticket.support_management_system_api.features.user.entities.User;
 import com.ticket.support_management_system_api.features.user_type.entities.UserType;
 import jakarta.servlet.http.Cookie;
@@ -219,7 +218,7 @@ public class AuthService {
     private UserType resolveUserType(User user) {
         if (user.getAccountType() == AccountType.EXTERNAL) {
             return externalDetailsRepository.findById(user.getId())
-                    .map(ExternalDetails::getUserType)
+                    .map(ed -> ed.getUserType())
                     .orElse(null);
         }
         return null;

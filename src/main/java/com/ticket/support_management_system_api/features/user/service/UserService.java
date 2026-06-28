@@ -59,12 +59,12 @@ public class UserService {
     @Transactional(readOnly = true)
     public PageResponse<UserResponse> findAll(UserFilterRequest filter, Pageable pageable) {
         Page<User> page = userRepository.findAll(UserSpecification.active(filter), pageable);
-        List<UUID> ids = page.getContent().stream().map(User::getId).toList();
+        List<UUID> ids = page.getContent().stream().map(user -> user.getId()).toList();
 
         Map<UUID, CustomerDetails> customerMap = customerDetailsRepository.findAllByUserIdIn(ids)
-                .stream().collect(Collectors.toMap(CustomerDetails::getUserId, cd -> cd));
+                .stream().collect(Collectors.toMap(cd -> cd.getUserId(), cd -> cd));
         Map<UUID, ExternalDetails> externalMap = externalDetailsRepository.findAllByUserIdIn(ids)
-                .stream().collect(Collectors.toMap(ExternalDetails::getUserId, ed -> ed));
+                .stream().collect(Collectors.toMap(ed -> ed.getUserId(), ed -> ed));
 
         return PaginationUtils.toPageResponse(page, user -> toResponse(user, customerMap, externalMap));
     }
