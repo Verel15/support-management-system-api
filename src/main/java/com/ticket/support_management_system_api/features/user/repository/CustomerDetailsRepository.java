@@ -11,4 +11,6 @@ public interface CustomerDetailsRepository extends JpaRepository<CustomerDetails
 
     @EntityGraph(attributePaths = {"company"})
     List<CustomerDetails> findAllByUserIdIn(List<UUID> userIds);
+
+    long countByCompanyId(UUID companyId);
 }

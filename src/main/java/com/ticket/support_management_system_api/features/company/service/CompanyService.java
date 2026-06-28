@@ -6,6 +6,8 @@ import com.ticket.support_management_system_api.features.company.dto.CompanyRequ
 import com.ticket.support_management_system_api.features.company.dto.CompanyResponse;
 import com.ticket.support_management_system_api.features.company.entities.Company;
 import com.ticket.support_management_system_api.features.company.repository.CompanyRepository;
+import com.ticket.support_management_system_api.features.project.repository.ProjectRepository;
+import com.ticket.support_management_system_api.features.user.repository.CustomerDetailsRepository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,8 @@ import java.util.UUID;
 public class CompanyService {
 
     private final CompanyRepository companyRepository;
+    private final ProjectRepository projectRepository;
+    private final CustomerDetailsRepository customerDetailsRepository;
 
     @Transactional(readOnly = true)
     public List<CompanyResponse> findAll() {
@@ -73,6 +77,8 @@ public class CompanyService {
                 .name(company.getName())
                 .logoImageUrl(company.getLogoImageUrl())
                 .status(company.getStatus())
+                .customerCount(customerDetailsRepository.countByCompanyId(company.getId()))
+                .projectCount(projectRepository.countByCompanyIdAndArchivedAtIsNull(company.getId()))
                 .createdAt(company.getCreatedAt())
                 .updatedAt(company.getUpdatedAt())
                 .build();

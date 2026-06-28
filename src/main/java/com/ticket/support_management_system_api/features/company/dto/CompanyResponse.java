@@ -15,6 +15,8 @@ public class CompanyResponse {
     private String name;
     private String logoImageUrl;
     private CommonStatus status;
+    private long customerCount;
+    private long projectCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
