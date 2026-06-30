@@ -60,8 +60,9 @@ public class TicketCategoryService {
         TicketCategory category = TicketCategory.builder()
                 .name(request.getName())
                 .statusFlow(statusFlow)
-                .subCategories(subCategories)
                 .build();
+        subCategories.forEach(sc -> sc.setCategory(category));
+        category.getSubCategories().addAll(subCategories);
         return toResponse(ticketCategoryRepository.saveAndFlush(category));
     }
 
@@ -77,6 +78,7 @@ public class TicketCategoryService {
         category.setName(request.getName());
         category.setStatusFlow(statusFlow);
         category.getSubCategories().clear();
+        subCategories.forEach(sc -> sc.setCategory(category));
         category.getSubCategories().addAll(subCategories);
         return toResponse(ticketCategoryRepository.save(category));
     }

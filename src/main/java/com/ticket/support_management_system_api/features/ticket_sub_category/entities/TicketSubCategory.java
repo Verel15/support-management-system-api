@@ -3,6 +3,7 @@ package com.ticket.support_management_system_api.features.ticket_sub_category.en
 import com.ticket.support_management_system_api.common.entity.BaseEntity;
 import com.ticket.support_management_system_api.features.position.entities.Position;
 import com.ticket.support_management_system_api.features.priority.entities.PriorityLevels;
+import com.ticket.support_management_system_api.features.ticket_category.entities.TicketCategory;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,4 +51,8 @@ public class TicketSubCategory extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "position_id", nullable = false)
     private Position position;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = true)
+    private TicketCategory category;
 }

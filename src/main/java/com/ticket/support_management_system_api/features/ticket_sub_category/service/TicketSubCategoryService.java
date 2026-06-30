@@ -16,7 +16,6 @@ import com.ticket.support_management_system_api.features.position.entities.Posit
 import com.ticket.support_management_system_api.features.position.repository.PositionRepository;
 import com.ticket.support_management_system_api.features.priority.entities.PriorityLevels;
 import com.ticket.support_management_system_api.features.priority.repository.PriorityRepository;
-import com.ticket.support_management_system_api.features.ticket_category.repository.TicketCategoryRepository;
 import com.ticket.support_management_system_api.features.ticket_sub_category.dto.TicketSubCategoryRequest;
 import com.ticket.support_management_system_api.features.ticket_sub_category.dto.TicketSubCategoryResponse;
 import com.ticket.support_management_system_api.features.ticket_sub_category.entities.TicketSubCategory;
@@ -32,7 +31,6 @@ public class TicketSubCategoryService {
     private final TicketSubCategoryRepository ticketSubCategoryRepository;
     private final PriorityRepository priorityRepository;
     private final PositionRepository positionRepository;
-    private final TicketCategoryRepository ticketCategoryRepository;
 
     @Transactional(readOnly = true)
     public PageResponse<TicketSubCategoryResponse> findAll(int page, int size) {
@@ -81,9 +79,6 @@ public class TicketSubCategoryService {
 
     public void delete(UUID id, UUID userId) {
         TicketSubCategory subCategory = getOrThrow(id);
-        if (ticketCategoryRepository.existsBySubCategoriesIdAndArchivedAtIsNull(id)) {
-            throw new DuplicateResourceException("ไม่สามารถลบหมวดหมู่ย่อยที่ยังถูกใช้งานโดยหมวดหมู่อยู่");
-        }
         subCategory.setArchivedAt(LocalDateTime.now());
         subCategory.setArchivedBy(userId);
         ticketSubCategoryRepository.save(subCategory);

@@ -1,7 +1,7 @@
 package com.ticket.support_management_system_api.features.ticket_type.entities;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import com.ticket.support_management_system_api.common.entity.BaseEntity;
 import com.ticket.support_management_system_api.features.ticket_category.entities.TicketCategory;
@@ -44,5 +44,5 @@ public class TicketType extends BaseEntity {
         joinColumns = @JoinColumn(name = "type_id"),
         inverseJoinColumns = @JoinColumn(name = "category_id")
     )
-    private List<TicketCategory> categories = new ArrayList<>();
+    private Set<TicketCategory> categories = new HashSet<>();
 }

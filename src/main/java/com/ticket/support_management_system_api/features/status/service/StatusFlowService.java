@@ -95,7 +95,7 @@ public class StatusFlowService {
     private List<Statuses> buildAllStatuses(List<String> processNames, StatusFlows flow) {
         List<Statuses> statuses = new ArrayList<>();
 
-        statuses.add(buildStatus(flow, StatusGroup.START, "open", 1, true));
+        statuses.add(buildStatus(flow, StatusGroup.START, "Open", 1, true));
 
         int processSeq = 1;
         statuses.add(buildStatus(flow, StatusGroup.PROCESS, "In Progress", processSeq++, true));

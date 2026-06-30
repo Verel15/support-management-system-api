@@ -13,13 +13,13 @@ import java.util.UUID;
 
 public interface TicketSubCategoryRepository extends JpaRepository<TicketSubCategory, UUID> {
 
-    @EntityGraph(attributePaths = {"priorityLevel", "position"})
+    @EntityGraph(attributePaths = {"priorityLevel", "position", "category", "category.statusFlow"})
     Page<TicketSubCategory> findAllByArchivedAtIsNull(Pageable pageable);
 
-    @EntityGraph(attributePaths = {"priorityLevel", "position"})
+    @EntityGraph(attributePaths = {"priorityLevel", "position", "category", "category.statusFlow"})
     Optional<TicketSubCategory> findByIdAndArchivedAtIsNull(UUID id);
 
-    @EntityGraph(attributePaths = {"priorityLevel", "position"})
+    @EntityGraph(attributePaths = {"priorityLevel", "position", "category", "category.statusFlow"})
     List<TicketSubCategory> findAllByIdInAndArchivedAtIsNull(List<UUID> ids);
 
     boolean existsByNameAndArchivedAtIsNull(String name);

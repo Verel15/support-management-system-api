@@ -7,14 +7,14 @@ import com.ticket.support_management_system_api.common.entity.BaseEntity;
 import com.ticket.support_management_system_api.features.status.entities.StatusFlows;
 import com.ticket.support_management_system_api.features.ticket_sub_category.entities.TicketSubCategory;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
@@ -52,11 +52,6 @@ public class TicketCategory extends BaseEntity {
     private StatusFlows statusFlow;
 
     @Builder.Default
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-        name = "ticket_category_sub_categories",
-        joinColumns = @JoinColumn(name = "category_id"),
-        inverseJoinColumns = @JoinColumn(name = "sub_category_id")
-    )
+    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TicketSubCategory> subCategories = new ArrayList<>();
 }

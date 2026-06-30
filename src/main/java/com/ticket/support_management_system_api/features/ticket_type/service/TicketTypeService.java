@@ -1,7 +1,6 @@
 package com.ticket.support_management_system_api.features.ticket_type.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,7 +52,7 @@ public class TicketTypeService {
         List<TicketCategory> categories = getCategoriesOrThrow(request.getCategoryIds());
         TicketType ticketType = TicketType.builder()
                 .name(request.getName())
-                .categories(new ArrayList<>(categories))
+                .categories(new java.util.HashSet<>(categories))
                 .build();
         return toResponse(ticketTypeRepository.saveAndFlush(ticketType));
     }
