@@ -2,6 +2,8 @@ package com.ticket.support_management_system_api.features.ticket.service;
 
 import com.ticket.support_management_system_api.common.exception.BadRequestException;
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
+import com.ticket.support_management_system_api.features.notification.enums.NotificationType;
+import com.ticket.support_management_system_api.features.notification.service.NotificationEventPublisher;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.common.utils.PaginationUtils;
 import com.ticket.support_management_system_api.features.priority.entities.PriorityLevels;
@@ -53,6 +55,7 @@ public class TicketService {
     private final TicketAssigneeRepository ticketAssigneeRepository;
     private final TicketStatusLogRepository statusLogRepository;
     private final TicketYearCounterRepository yearCounterRepository;
+    private final NotificationEventPublisher notificationEventPublisher;
 
     @Transactional(readOnly = true)
     public PageResponse<TicketListResponse> findAll(TicketFilterRequest filter, Pageable pageable) {
@@ -118,6 +121,12 @@ public class TicketService {
                 .build();
         statusLogRepository.save(initialLog);
 
+        notificationEventPublisher.publishTicketEvent(
+                NotificationType.TICKET_CREATED, ticket.getId(), actorUserId,
+                "Ticket ใหม่: " + ticket.getTitle(),
+                actor.getFirstName() + " " + actor.getLastName() + " สร้าง Ticket ใหม่",
+                Map.of("ticketTitle", ticket.getTitle()));
+
         return toDetailResponse(ticket, List.of());
     }
 
@@ -159,6 +168,12 @@ public class TicketService {
         }
 
         ticket = ticketRepository.save(ticket);
+        notificationEventPublisher.publishTicketEvent(
+                NotificationType.TICKET_UPDATED, ticket.getId(), actorUserId,
+                "อัพเดต Ticket: " + ticket.getTitle(),
+                "มีการอัพเดตข้อมูล Ticket",
+                Map.of("ticketTitle", ticket.getTitle()));
+
         List<TicketAssignee> assignees = ticketAssigneeRepository.findAllByTicketIdAndArchivedAtIsNull(id);
         return toDetailResponse(ticket, assignees);
     }
@@ -168,6 +183,11 @@ public class TicketService {
         ticket.setArchivedAt(LocalDateTime.now());
         ticket.setArchivedBy(actorUserId);
         ticketRepository.save(ticket);
+        notificationEventPublisher.publishTicketEvent(
+                NotificationType.TICKET_DELETED, id, actorUserId,
+                "ลบ Ticket: " + ticket.getTitle(),
+                "Ticket ถูกลบออกจากระบบ",
+                Map.of("ticketTitle", ticket.getTitle()));
     }
 
     public TicketDetailResponse changeStatus(UUID id, ChangeTicketStatusRequest request, UUID actorUserId) {
@@ -194,6 +214,18 @@ public class TicketService {
                 .note(request.getNote())
                 .build();
         statusLogRepository.save(log);
+
+        notificationEventPublisher.publishTicketEvent(
+                NotificationType.TICKET_STATUS_CHANGED, ticket.getId(), actorUserId,
+                "สถานะ Ticket เปลี่ยน: " + ticket.getTitle(),
+                "สถานะเปลี่ยนจาก " + fromStatus.getName() + " เป็น " + toStatus.getName(),
+                Map.of(
+                        "ticketTitle", ticket.getTitle(),
+                        "fromStatusName", fromStatus.getName(),
+                        "fromStatusGroup", fromStatus.getGroup().name(),
+                        "toStatusName", toStatus.getName(),
+                        "toStatusGroup", toStatus.getGroup().name()
+                ));
 
         List<TicketAssignee> assignees = ticketAssigneeRepository.findAllByTicketIdAndArchivedAtIsNull(id);
         return toDetailResponse(ticket, assignees);

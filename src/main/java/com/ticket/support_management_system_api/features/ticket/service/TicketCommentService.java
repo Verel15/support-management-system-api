@@ -1,6 +1,7 @@
 package com.ticket.support_management_system_api.features.ticket.service;
 
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
+import com.ticket.support_management_system_api.features.notification.service.NotificationEventPublisher;
 import com.ticket.support_management_system_api.features.ticket.dto.AddCommentRequest;
 import com.ticket.support_management_system_api.features.ticket.dto.TicketCommentResponse;
 import com.ticket.support_management_system_api.features.ticket.dto.TicketTimelineItem;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -31,6 +33,7 @@ public class TicketCommentService {
     private final TicketStatusLogRepository statusLogRepository;
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
+    private final NotificationEventPublisher notificationEventPublisher;
 
     @Transactional(readOnly = true)
     public List<TicketCommentResponse> findAllByTicket(UUID ticketId) {
@@ -68,7 +71,19 @@ public class TicketCommentService {
                 .content(request.getContent())
                 .commentType(TicketCommentType.COMMENT)
                 .build();
-        return toResponse(commentRepository.save(comment));
+        TicketComment saved = commentRepository.save(comment);
+
+        notificationEventPublisher.publishCommentEvent(
+                ticketId, actorUserId,
+                "Comment ใหม่ใน Ticket: " + ticket.getTitle(),
+                author.getFirstName() + " " + author.getLastName() + " แสดงความคิดเห็น",
+                Map.of(
+                        "ticketTitle", ticket.getTitle(),
+                        "commentPreview", request.getContent().length() > 80
+                                ? request.getContent().substring(0, 80) + "..." : request.getContent()
+                ));
+
+        return toResponse(saved);
     }
 
     private Ticket getTicketOrThrow(UUID ticketId) {

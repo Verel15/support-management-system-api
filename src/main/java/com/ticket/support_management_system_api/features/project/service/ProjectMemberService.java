@@ -2,6 +2,9 @@ package com.ticket.support_management_system_api.features.project.service;
 
 import com.ticket.support_management_system_api.common.exception.DuplicateResourceException;
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
+import com.ticket.support_management_system_api.features.notification.enums.NotificationType;
+import com.ticket.support_management_system_api.features.notification.service.NotificationEventPublisher;
+import java.util.Map;
 import com.ticket.support_management_system_api.features.project.dto.ProjectMemberRequest;
 import com.ticket.support_management_system_api.features.project.dto.ProjectMemberResponse;
 import com.ticket.support_management_system_api.features.project.entities.Project;
@@ -26,6 +29,7 @@ public class ProjectMemberService {
     private final ProjectMemberRepository memberRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final NotificationEventPublisher notificationEventPublisher;
 
     @Transactional(readOnly = true)
     public List<ProjectMemberResponse> findAllByProject(UUID projectId) {
@@ -54,7 +58,13 @@ public class ProjectMemberService {
                 .user(user)
                 .role(request.getRole())
                 .build();
-        return toResponse(memberRepository.save(member));
+        ProjectMemberResponse response = toResponse(memberRepository.save(member));
+        notificationEventPublisher.publishProjectEvent(
+                NotificationType.PROJECT_MEMBER_ADDED, projectId, null,
+                "สมาชิกใหม่ใน " + project.getName(),
+                user.getFirstName() + " " + user.getLastName() + " ถูกเพิ่มเข้าโปรเจค",
+                Map.of("projectName", project.getName(), "memberName", user.getFirstName() + " " + user.getLastName()));
+        return response;
     }
 
     public void removeMember(UUID projectId, UUID memberId) {
@@ -66,6 +76,12 @@ public class ProjectMemberService {
 
         member.setArchivedAt(LocalDateTime.now());
         memberRepository.save(member);
+        notificationEventPublisher.publishProjectEvent(
+                NotificationType.PROJECT_MEMBER_REMOVED, projectId, null,
+                "สมาชิกออกจาก " + member.getProject().getName(),
+                member.getUser().getFirstName() + " " + member.getUser().getLastName() + " ถูกนำออกจากโปรเจค",
+                Map.of("projectName", member.getProject().getName(),
+                        "memberName", member.getUser().getFirstName() + " " + member.getUser().getLastName()));
     }
 
     private ProjectMemberResponse toResponse(ProjectMember member) {

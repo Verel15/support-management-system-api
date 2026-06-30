@@ -2,6 +2,8 @@ package com.ticket.support_management_system_api.features.ticket.service;
 
 import com.ticket.support_management_system_api.common.exception.DuplicateResourceException;
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
+import com.ticket.support_management_system_api.features.notification.enums.NotificationType;
+import com.ticket.support_management_system_api.features.notification.service.NotificationEventPublisher;
 import com.ticket.support_management_system_api.features.ticket.dto.AddAssigneeRequest;
 import com.ticket.support_management_system_api.features.ticket.dto.TicketAssigneeResponse;
 import com.ticket.support_management_system_api.features.ticket.entities.Ticket;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -26,6 +29,7 @@ public class TicketAssigneeService {
     private final TicketAssigneeRepository assigneeRepository;
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
+    private final NotificationEventPublisher notificationEventPublisher;
 
     @Transactional(readOnly = true)
     public List<TicketAssigneeResponse> findAllByTicket(UUID ticketId) {
@@ -52,7 +56,13 @@ public class TicketAssigneeService {
                 })
                 .orElseGet(() -> TicketAssignee.builder().ticket(ticket).user(user).build());
 
-        return toResponse(assigneeRepository.save(assignee));
+        TicketAssigneeResponse response = toResponse(assigneeRepository.save(assignee));
+        notificationEventPublisher.publishTicketEvent(
+                NotificationType.TICKET_ASSIGNED, ticketId, null,
+                "มอบหมาย Ticket ให้ " + user.getFirstName() + " " + user.getLastName(),
+                user.getFirstName() + " " + user.getLastName() + " ถูกมอบหมายให้รับผิดชอบ Ticket",
+                Map.of("assigneeName", user.getFirstName() + " " + user.getLastName()));
+        return response;
     }
 
     public void removeAssignee(UUID ticketId, UUID userId, UUID actorUserId) {
@@ -62,6 +72,11 @@ public class TicketAssigneeService {
         assignee.setArchivedAt(LocalDateTime.now());
         assignee.setArchivedBy(actorUserId);
         assigneeRepository.save(assignee);
+        notificationEventPublisher.publishTicketEvent(
+                NotificationType.TICKET_UNASSIGNED, ticketId, actorUserId,
+                "ยกเลิกการมอบหมาย Ticket",
+                "ยกเลิกการมอบหมายผู้รับผิดชอบออกจาก Ticket",
+                Map.of());
     }
 
     private Ticket getTicketOrThrow(UUID ticketId) {

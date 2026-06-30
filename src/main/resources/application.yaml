@@ -36,6 +36,7 @@ app:
       - application/vnd.openxmlformats-officedocument.wordprocessingml.document
     local-base-path: ${user.home}/uploads
 
+
 springdoc:
   api-docs:
     path: /v3/api-docs

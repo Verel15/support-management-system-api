@@ -168,6 +168,7 @@ public class UserService {
         for (int i = 0; i < 8; i++) {
             sb.append(PASSWORD_CHARS.charAt(RANDOM.nextInt(PASSWORD_CHARS.length())));
         }
+        System.out.println("Generated Password: " + sb.toString());
         return sb.toString();
     }
 

@@ -2,6 +2,9 @@ package com.ticket.support_management_system_api.features.project.service;
 
 import com.ticket.support_management_system_api.common.exception.DuplicateResourceException;
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
+import com.ticket.support_management_system_api.features.notification.enums.NotificationType;
+import com.ticket.support_management_system_api.features.notification.service.NotificationEventPublisher;
+import java.util.Map;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.common.utils.PaginationUtils;
 import com.ticket.support_management_system_api.features.company.entities.Company;
@@ -32,6 +35,7 @@ public class ProjectService {
     private final CompanyRepository companyRepository;
     private final ProjectMemberRepository memberRepository;
     private final ProjectDocumentRepository documentRepository;
+    private final NotificationEventPublisher notificationEventPublisher;
 
     @Transactional(readOnly = true)
     public PageResponse<ProjectResponse> findAll(int page, int size) {
@@ -76,7 +80,13 @@ public class ProjectService {
         project.setCompany(company);
         project.setStartDate(request.getStartDate());
         project.setEndDate(request.getEndDate());
-        return toResponse(projectRepository.save(project));
+        ProjectResponse response = toResponse(projectRepository.save(project));
+        notificationEventPublisher.publishProjectEvent(
+                NotificationType.PROJECT_UPDATED, id, null,
+                "อัพเดตโปรเจค: " + project.getName(),
+                "ข้อมูลโปรเจคมีการเปลี่ยนแปลง",
+                Map.of("projectName", project.getName()));
+        return response;
     }
 
     public void delete(UUID id, UUID userId) {
