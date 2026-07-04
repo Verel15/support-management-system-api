@@ -15,13 +15,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ticket.support_management_system_api.common.dto.DeleteConfirmationRequest;
 import com.ticket.support_management_system_api.common.response.ApiResponse;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
+import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
 import com.ticket.support_management_system_api.features.ticket_sub_category.dto.TicketSubCategoryRequest;
 import com.ticket.support_management_system_api.features.ticket_sub_category.dto.TicketSubCategoryResponse;
 import com.ticket.support_management_system_api.features.ticket_sub_category.service.TicketSubCategoryService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -31,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 public class TicketSubCategoryController {
 
     private final TicketSubCategoryService ticketSubCategoryService;
+    private final ReauthenticationService reauthenticationService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<TicketSubCategoryResponse>>> findAll(
@@ -62,7 +66,10 @@ public class TicketSubCategoryController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID id,
-            @AuthenticationPrincipal JwtPrincipal user) {
+            @Valid @RequestBody DeleteConfirmationRequest body,
+            @AuthenticationPrincipal JwtPrincipal user,
+            HttpServletRequest request) {
+        reauthenticationService.verifyPassword(user.userId(), body.getPassword(), request);
         ticketSubCategoryService.delete(id, user.userId());
         return ResponseEntity.ok(ApiResponse.success("ลบหมวดหมู่ย่อยสำเร็จ", null));
     }

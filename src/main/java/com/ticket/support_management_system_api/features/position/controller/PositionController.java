@@ -1,14 +1,19 @@
 package com.ticket.support_management_system_api.features.position.controller;
 
+import com.ticket.support_management_system_api.common.dto.DeleteConfirmationRequest;
 import com.ticket.support_management_system_api.common.response.ApiResponse;
+import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
+import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
 import com.ticket.support_management_system_api.features.position.dto.PositionRequest;
 import com.ticket.support_management_system_api.features.position.dto.PositionResponse;
 import com.ticket.support_management_system_api.features.position.service.PositionService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +25,7 @@ import java.util.UUID;
 public class PositionController {
 
     private final PositionService positionService;
+    private final ReauthenticationService reauthenticationService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<PositionResponse>>> findAll() {
@@ -45,7 +51,12 @@ public class PositionController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @PathVariable UUID id,
+            @Valid @RequestBody DeleteConfirmationRequest body,
+            @AuthenticationPrincipal JwtPrincipal user,
+            HttpServletRequest request) {
+        reauthenticationService.verifyPassword(user.userId(), body.getPassword(), request);
         positionService.delete(id);
         return ResponseEntity.ok(ApiResponse.success("ลบข้อมูลตำแหน่งสำเร็จ", null));
     }

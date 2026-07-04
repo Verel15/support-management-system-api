@@ -16,14 +16,17 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ticket.support_management_system_api.common.dto.DeleteConfirmationRequest;
 import com.ticket.support_management_system_api.common.response.ApiResponse;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
+import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
 import com.ticket.support_management_system_api.features.ticket_type.dto.TicketTypeRequest;
 import com.ticket.support_management_system_api.features.ticket_type.dto.TicketTypeResponse;
 import com.ticket.support_management_system_api.features.ticket_type.dto.TicketTypeSelectorResponse;
 import com.ticket.support_management_system_api.features.ticket_type.service.TicketTypeService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -33,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 public class TicketTypeController {
 
     private final TicketTypeService ticketTypeService;
+    private final ReauthenticationService reauthenticationService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<TicketTypeResponse>>> findAll(
@@ -67,7 +71,10 @@ public class TicketTypeController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID id,
-            @AuthenticationPrincipal JwtPrincipal user) {
+            @Valid @RequestBody DeleteConfirmationRequest body,
+            @AuthenticationPrincipal JwtPrincipal user,
+            HttpServletRequest request) {
+        reauthenticationService.verifyPassword(user.userId(), body.getPassword(), request);
         ticketTypeService.delete(id, user.userId());
         return ResponseEntity.ok(ApiResponse.success("ลบประเภทตั๋วสำเร็จ", null));
     }

@@ -1,11 +1,14 @@
 package com.ticket.support_management_system_api.features.status.controller;
 
+import com.ticket.support_management_system_api.common.dto.DeleteConfirmationRequest;
 import com.ticket.support_management_system_api.common.response.ApiResponse;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
+import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
 import com.ticket.support_management_system_api.features.status.dto.StatusFlowRequest;
 import com.ticket.support_management_system_api.features.status.dto.StatusFlowResponse;
 import com.ticket.support_management_system_api.features.status.service.StatusFlowService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +24,7 @@ import java.util.UUID;
 public class StatusFlowController {
 
     private final StatusFlowService statusFlowService;
+    private final ReauthenticationService reauthenticationService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<StatusFlowResponse>>> findAll(
@@ -52,7 +56,10 @@ public class StatusFlowController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID id,
-            @AuthenticationPrincipal JwtPrincipal user) {
+            @Valid @RequestBody DeleteConfirmationRequest body,
+            @AuthenticationPrincipal JwtPrincipal user,
+            HttpServletRequest request) {
+        reauthenticationService.verifyPassword(user.userId(), body.getPassword(), request);
         statusFlowService.delete(id, user.userId());
         return ResponseEntity.ok(ApiResponse.success("ลบสถานะสำเร็จ", null));
     }

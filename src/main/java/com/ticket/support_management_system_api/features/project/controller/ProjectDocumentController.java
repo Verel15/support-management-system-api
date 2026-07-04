@@ -1,9 +1,13 @@
 package com.ticket.support_management_system_api.features.project.controller;
 
+import com.ticket.support_management_system_api.common.dto.DeleteConfirmationRequest;
 import com.ticket.support_management_system_api.common.response.ApiResponse;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
+import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
 import com.ticket.support_management_system_api.features.project.dto.ProjectDocumentResponse;
 import com.ticket.support_management_system_api.features.project.service.ProjectDocumentService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,6 +25,7 @@ import java.util.UUID;
 public class ProjectDocumentController {
 
     private final ProjectDocumentService documentService;
+    private final ReauthenticationService reauthenticationService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProjectDocumentResponse>>> findAll(
@@ -42,7 +47,10 @@ public class ProjectDocumentController {
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID projectId,
             @PathVariable UUID documentId,
-            @AuthenticationPrincipal JwtPrincipal user) {
+            @Valid @RequestBody DeleteConfirmationRequest body,
+            @AuthenticationPrincipal JwtPrincipal user,
+            HttpServletRequest request) {
+        reauthenticationService.verifyPassword(user.userId(), body.getPassword(), request);
         documentService.deleteDocument(projectId, documentId);
         return ResponseEntity.ok(ApiResponse.success("ลบเอกสารสำเร็จ", null));
     }

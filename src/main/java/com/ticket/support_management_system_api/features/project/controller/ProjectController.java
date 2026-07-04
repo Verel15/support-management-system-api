@@ -1,11 +1,14 @@
 package com.ticket.support_management_system_api.features.project.controller;
 
+import com.ticket.support_management_system_api.common.dto.DeleteConfirmationRequest;
 import com.ticket.support_management_system_api.common.response.ApiResponse;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
+import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
 import com.ticket.support_management_system_api.features.project.dto.ProjectRequest;
 import com.ticket.support_management_system_api.features.project.dto.ProjectResponse;
 import com.ticket.support_management_system_api.features.project.service.ProjectService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +24,7 @@ import java.util.UUID;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final ReauthenticationService reauthenticationService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ProjectResponse>>> findAll(
@@ -65,7 +69,10 @@ public class ProjectController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID id,
-            @AuthenticationPrincipal JwtPrincipal user) {
+            @Valid @RequestBody DeleteConfirmationRequest body,
+            @AuthenticationPrincipal JwtPrincipal user,
+            HttpServletRequest request) {
+        reauthenticationService.verifyPassword(user.userId(), body.getPassword(), request);
         projectService.delete(id, user.userId());
         return ResponseEntity.ok(ApiResponse.success("ลบโครงการสำเร็จ", null));
     }

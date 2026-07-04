@@ -3,7 +3,7 @@ package com.ticket.support_management_system_api.features.priority.service;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,10 +12,12 @@ import com.ticket.support_management_system_api.common.exception.DuplicateResour
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.common.utils.PaginationUtils;
+import com.ticket.support_management_system_api.features.priority.dto.PriorityFilterRequest;
 import com.ticket.support_management_system_api.features.priority.dto.PriorityRequest;
 import com.ticket.support_management_system_api.features.priority.dto.PriorityResponse;
 import com.ticket.support_management_system_api.features.priority.entities.PriorityLevels;
 import com.ticket.support_management_system_api.features.priority.repository.PriorityRepository;
+import com.ticket.support_management_system_api.features.priority.repository.PrioritySpecification;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,12 +29,9 @@ public class PriorityService {
     private final PriorityRepository priorityRepository;
 
     @Transactional(readOnly = true)
-    public PageResponse<PriorityResponse> findAll(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return PaginationUtils.toPageResponse(
-                priorityRepository.findAllByArchivedAtIsNullOrderByCreatedAt(pageable),
-                this::toResponse
-        );
+    public PageResponse<PriorityResponse> findAll(PriorityFilterRequest filter, Pageable pageable) {
+        Page<PriorityLevels> page = priorityRepository.findAll(PrioritySpecification.active(filter), pageable);
+        return PaginationUtils.toPageResponse(page, this::toResponse);
     }
 
     @Transactional(readOnly = true)

@@ -15,13 +15,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ticket.support_management_system_api.common.dto.DeleteConfirmationRequest;
 import com.ticket.support_management_system_api.common.response.ApiResponse;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
+import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
 import com.ticket.support_management_system_api.features.ticket_category.dto.TicketCategoryRequest;
 import com.ticket.support_management_system_api.features.ticket_category.dto.TicketCategoryResponse;
 import com.ticket.support_management_system_api.features.ticket_category.service.TicketCategoryService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -31,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 public class TicketCategoryController {
 
     private final TicketCategoryService ticketCategoryService;
+    private final ReauthenticationService reauthenticationService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<TicketCategoryResponse>>> findAll(
@@ -60,7 +64,10 @@ public class TicketCategoryController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID id,
-            @AuthenticationPrincipal JwtPrincipal user) {
+            @Valid @RequestBody DeleteConfirmationRequest body,
+            @AuthenticationPrincipal JwtPrincipal user,
+            HttpServletRequest request) {
+        reauthenticationService.verifyPassword(user.userId(), body.getPassword(), request);
         ticketCategoryService.delete(id, user.userId());
         return ResponseEntity.ok(ApiResponse.success("ลบหมวดหมู่สำเร็จ", null));
     }

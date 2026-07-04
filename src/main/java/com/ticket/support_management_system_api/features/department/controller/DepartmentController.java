@@ -1,14 +1,19 @@
 package com.ticket.support_management_system_api.features.department.controller;
 
+import com.ticket.support_management_system_api.common.dto.DeleteConfirmationRequest;
 import com.ticket.support_management_system_api.common.response.ApiResponse;
+import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
+import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
 import com.ticket.support_management_system_api.features.department.dto.DepartmentRequest;
 import com.ticket.support_management_system_api.features.department.dto.DepartmentResponse;
 import com.ticket.support_management_system_api.features.department.service.DepartmentService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +25,7 @@ import java.util.UUID;
 public class DepartmentController {
 
     private final DepartmentService departmentService;
+    private final ReauthenticationService reauthenticationService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<DepartmentResponse>>> findAll() {
@@ -45,7 +51,12 @@ public class DepartmentController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @PathVariable UUID id,
+            @Valid @RequestBody DeleteConfirmationRequest body,
+            @AuthenticationPrincipal JwtPrincipal user,
+            HttpServletRequest request) {
+        reauthenticationService.verifyPassword(user.userId(), body.getPassword(), request);
         departmentService.delete(id);
         return ResponseEntity.ok(ApiResponse.success("ลบข้อมูลแผนกสำเร็จ", null));
     }

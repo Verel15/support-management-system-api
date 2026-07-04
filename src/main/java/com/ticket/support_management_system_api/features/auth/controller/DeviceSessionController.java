@@ -1,13 +1,16 @@
 package com.ticket.support_management_system_api.features.auth.controller;
 
+import com.ticket.support_management_system_api.common.dto.DeleteConfirmationRequest;
 import com.ticket.support_management_system_api.common.response.ApiResponse;
 import com.ticket.support_management_system_api.features.auth.dto.DeviceSessionResponse;
 import com.ticket.support_management_system_api.features.auth.entities.DeviceSession;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.auth.service.AuthService;
 import com.ticket.support_management_system_api.features.auth.service.DeviceSessionService;
+import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,6 +26,7 @@ public class DeviceSessionController {
 
     private final AuthService authService;
     private final DeviceSessionService deviceSessionService;
+    private final ReauthenticationService reauthenticationService;
 
     @GetMapping
     ResponseEntity<ApiResponse<List<DeviceSessionResponse>>> listSessions(
@@ -43,17 +47,21 @@ public class DeviceSessionController {
     @DeleteMapping("/{sessionId}")
     ResponseEntity<ApiResponse<Void>> revokeSession(
             @PathVariable UUID sessionId,
+            @Valid @RequestBody DeleteConfirmationRequest body,
             @AuthenticationPrincipal JwtPrincipal principal,
             HttpServletRequest request) {
+        reauthenticationService.verifyPassword(principal.userId(), body.getPassword(), request);
         authService.revokeSession(sessionId, principal, request);
         return ResponseEntity.ok(ApiResponse.success("ยกเลิก session สำเร็จ", null));
     }
 
     @DeleteMapping
     ResponseEntity<ApiResponse<Void>> revokeAllSessions(
+            @Valid @RequestBody DeleteConfirmationRequest body,
             @AuthenticationPrincipal JwtPrincipal principal,
             HttpServletRequest request,
             HttpServletResponse response) {
+        reauthenticationService.verifyPassword(principal.userId(), body.getPassword(), request);
         authService.revokeAllSessions(principal, request, response, null);
         return ResponseEntity.ok(ApiResponse.success("ยกเลิก session ทั้งหมดสำเร็จ", null));
     }

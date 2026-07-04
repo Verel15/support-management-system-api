@@ -51,4 +51,7 @@ public class User extends BaseEntity {
     @Column(name = "locked_until")
     private LocalDateTime lockedUntil;
 
+    @Column(name = "reauth_locked_until")
+    private LocalDateTime reauthLockedUntil;
+
 }

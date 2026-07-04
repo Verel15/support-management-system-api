@@ -1,15 +1,20 @@
 package com.ticket.support_management_system_api.features.user_type.controller;
 
+import com.ticket.support_management_system_api.common.dto.DeleteConfirmationRequest;
 import com.ticket.support_management_system_api.common.response.ApiResponse;
 import com.ticket.support_management_system_api.common.response.PageResponse;
+import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
+import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
 import com.ticket.support_management_system_api.features.user_type.dto.UserTypeRequest;
 import com.ticket.support_management_system_api.features.user_type.dto.UserTypeResponse;
 import com.ticket.support_management_system_api.features.user_type.service.UserTypeService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
@@ -19,6 +24,7 @@ import java.util.UUID;
 public class UserTypeController {
 
     private final UserTypeService userTypeService;
+    private final ReauthenticationService reauthenticationService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<UserTypeResponse>>> findAll(
@@ -47,7 +53,12 @@ public class UserTypeController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @PathVariable UUID id,
+            @Valid @RequestBody DeleteConfirmationRequest body,
+            @AuthenticationPrincipal JwtPrincipal user,
+            HttpServletRequest request) {
+        reauthenticationService.verifyPassword(user.userId(), body.getPassword(), request);
         userTypeService.delete(id);
         return ResponseEntity.ok(ApiResponse.success("ลบประเภทผู้ใช้สำเร็จ", null));
     }

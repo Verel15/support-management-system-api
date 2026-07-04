@@ -25,6 +25,14 @@ public class RateLimitService {
         buckets.remove("email:" + email);
     }
 
+    public boolean tryConsumeReauthByUser(java.util.UUID userId) {
+        return getBucket("reauth:" + userId, 5, Duration.ofMinutes(10)).tryConsume(1);
+    }
+
+    public void resetReauthBucket(java.util.UUID userId) {
+        buckets.remove("reauth:" + userId);
+    }
+
     private Bucket getBucket(String key, long capacity, Duration refillPeriod) {
         return buckets.computeIfAbsent(key, k -> Bucket.builder()
                 .addLimit(Bandwidth.builder()

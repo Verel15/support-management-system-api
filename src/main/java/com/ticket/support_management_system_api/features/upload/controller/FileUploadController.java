@@ -1,11 +1,15 @@
 package com.ticket.support_management_system_api.features.upload.controller;
 
+import com.ticket.support_management_system_api.common.dto.DeleteConfirmationRequest;
 import com.ticket.support_management_system_api.common.exception.TooManyRequestsException;
 import com.ticket.support_management_system_api.common.response.ApiResponse;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
+import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
 import com.ticket.support_management_system_api.features.upload.dto.FileUploadResponse;
 import com.ticket.support_management_system_api.features.upload.service.FileUploadService;
 import com.ticket.support_management_system_api.features.upload.service.UploadRateLimitService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -23,6 +27,7 @@ public class FileUploadController {
 
     private final FileUploadService fileUploadService;
     private final UploadRateLimitService uploadRateLimitService;
+    private final ReauthenticationService reauthenticationService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<FileUploadResponse>> upload(
@@ -53,8 +58,11 @@ public class FileUploadController {
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> delete(
             @RequestParam("url") String fileUrl,
-            @AuthenticationPrincipal JwtPrincipal user) {
+            @Valid @RequestBody DeleteConfirmationRequest body,
+            @AuthenticationPrincipal JwtPrincipal user,
+            HttpServletRequest request) {
 
+        reauthenticationService.verifyPassword(user.userId(), body.getPassword(), request);
         fileUploadService.delete(fileUrl);
         return ResponseEntity.ok(ApiResponse.success("ลบไฟล์สำเร็จ", null));
     }
