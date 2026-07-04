@@ -10,4 +10,6 @@ public interface CompanyRepository extends JpaRepository<Company, UUID> {
     boolean existsByName(String name);
     boolean existsByNameAndIdNot(String name, UUID id);
     List<Company> findAllByArchivedAtIsNullOrderByNameAsc();
+    List<Company> findAllByArchivedAtIsNullOrderByCreatedAtDesc();
+    List<Company> findAllByArchivedAtIsNullAndNameContainingIgnoreCaseOrderByCreatedAtDesc(String keyword);
 }

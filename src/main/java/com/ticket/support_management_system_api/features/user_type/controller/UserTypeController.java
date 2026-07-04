@@ -5,6 +5,7 @@ import com.ticket.support_management_system_api.common.response.ApiResponse;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
+import com.ticket.support_management_system_api.features.user_type.dto.UserTypeFilterRequest;
 import com.ticket.support_management_system_api.features.user_type.dto.UserTypeRequest;
 import com.ticket.support_management_system_api.features.user_type.dto.UserTypeResponse;
 import com.ticket.support_management_system_api.features.user_type.service.UserTypeService;
@@ -12,6 +13,8 @@ import com.ticket.support_management_system_api.features.user_type.service.UserT
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,10 +31,9 @@ public class UserTypeController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<UserTypeResponse>>> findAll(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String name) {
-        return ResponseEntity.ok(ApiResponse.success(userTypeService.findAll(page, size, name)));
+            @ModelAttribute UserTypeFilterRequest filter,
+            @PageableDefault(size = 10, sort = "name") Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success(userTypeService.findAll(filter, pageable)));
     }
 
     @GetMapping("/{id}")

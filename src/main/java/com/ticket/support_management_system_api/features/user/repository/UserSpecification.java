@@ -1,5 +1,6 @@
 package com.ticket.support_management_system_api.features.user.repository;
 
+import com.ticket.support_management_system_api.common.utils.DateRangeUtils;
 import com.ticket.support_management_system_api.features.user.dto.UserFilterRequest;
 import com.ticket.support_management_system_api.features.user.entities.User;
 import jakarta.persistence.criteria.Predicate;
@@ -20,9 +21,9 @@ public class UserSpecification {
                 predicates.add(cb.equal(root.get("accountType"), filter.getAccountType()));
             }
 
-            if (filter.getCreatedWithinDays() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"),
-                        LocalDateTime.now().minusDays(filter.getCreatedWithinDays())));
+            LocalDateTime start = DateRangeUtils.resolveStart(filter.getDateRange());
+            if (start != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), start));
             }
 
             if (filter.getKeyword() != null && !filter.getKeyword().isBlank()) {

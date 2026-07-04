@@ -5,17 +5,18 @@ import com.ticket.support_management_system_api.common.exception.ResourceNotFoun
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.common.utils.PaginationUtils;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
+import com.ticket.support_management_system_api.features.status.dto.StatusFlowFilterRequest;
 import com.ticket.support_management_system_api.features.status.dto.StatusFlowRequest;
 import com.ticket.support_management_system_api.features.status.dto.StatusFlowResponse;
 import com.ticket.support_management_system_api.features.status.entities.StatusFlows;
 import com.ticket.support_management_system_api.features.status.entities.Statuses;
 import com.ticket.support_management_system_api.features.status.repository.StatusFlowRepository;
+import com.ticket.support_management_system_api.features.status.repository.StatusFlowSpecification;
 import com.ticket.support_management_system_api.features.status.repository.StatusRepository;
 import com.ticket.support_management_system_api.features.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,12 +37,9 @@ public class StatusFlowService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public PageResponse<StatusFlowResponse> findAll(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
-        return PaginationUtils.toPageResponse(
-                statusFlowRepository.findAllByArchivedAtIsNull(pageable),
-                this::toResponse
-        );
+    public PageResponse<StatusFlowResponse> findAll(StatusFlowFilterRequest filter, Pageable pageable) {
+        Page<StatusFlows> page = statusFlowRepository.findAll(StatusFlowSpecification.active(filter), pageable);
+        return PaginationUtils.toPageResponse(page, this::toResponse);
     }
 
     @Transactional(readOnly = true)

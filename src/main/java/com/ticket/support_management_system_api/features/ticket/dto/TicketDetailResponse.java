@@ -42,6 +42,7 @@ public class TicketDetailResponse {
     private EIntervalUnit priorityIntervalUnit;
 
     private LocalDateTime dueDate;
+    private String remainingTime;
 
     private UUID requesterId;
     private String requesterFullName;

@@ -3,7 +3,7 @@ package com.ticket.support_management_system_api.features.ticket_sub_category.se
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +16,12 @@ import com.ticket.support_management_system_api.features.position.entities.Posit
 import com.ticket.support_management_system_api.features.position.repository.PositionRepository;
 import com.ticket.support_management_system_api.features.priority.entities.PriorityLevels;
 import com.ticket.support_management_system_api.features.priority.repository.PriorityRepository;
+import com.ticket.support_management_system_api.features.ticket_sub_category.dto.TicketSubCategoryFilterRequest;
 import com.ticket.support_management_system_api.features.ticket_sub_category.dto.TicketSubCategoryRequest;
 import com.ticket.support_management_system_api.features.ticket_sub_category.dto.TicketSubCategoryResponse;
 import com.ticket.support_management_system_api.features.ticket_sub_category.entities.TicketSubCategory;
 import com.ticket.support_management_system_api.features.ticket_sub_category.repository.TicketSubCategoryRepository;
+import com.ticket.support_management_system_api.features.ticket_sub_category.repository.TicketSubCategorySpecification;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,12 +35,10 @@ public class TicketSubCategoryService {
     private final PositionRepository positionRepository;
 
     @Transactional(readOnly = true)
-    public PageResponse<TicketSubCategoryResponse> findAll(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return PaginationUtils.toPageResponse(
-                ticketSubCategoryRepository.findAllByArchivedAtIsNull(pageable),
-                this::toResponse
-        );
+    public PageResponse<TicketSubCategoryResponse> findAll(TicketSubCategoryFilterRequest filter, Pageable pageable) {
+        Page<TicketSubCategory> page = ticketSubCategoryRepository.findAll(
+                TicketSubCategorySpecification.active(filter), pageable);
+        return PaginationUtils.toPageResponse(page, this::toResponse);
     }
 
     @Transactional(readOnly = true)

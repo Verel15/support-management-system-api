@@ -4,14 +4,16 @@ import com.ticket.support_management_system_api.common.exception.DuplicateResour
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.common.utils.PaginationUtils;
+import com.ticket.support_management_system_api.features.user_type.dto.UserTypeFilterRequest;
 import com.ticket.support_management_system_api.features.user_type.dto.UserTypeRequest;
 import com.ticket.support_management_system_api.features.user_type.dto.UserTypeResponse;
 import com.ticket.support_management_system_api.features.user_type.entities.UserType;
 import com.ticket.support_management_system_api.features.user_type.repository.UserTypeRepository;
+import com.ticket.support_management_system_api.features.user_type.repository.UserTypeSpecification;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,12 +26,9 @@ public class UserTypeService {
     private final UserTypeRepository userTypeRepository;
 
     @Transactional(readOnly = true)
-    public PageResponse<UserTypeResponse> findAll(int page, int size, String name) {
-        Pageable pageable = PageRequest.of(page, size);
-        var result = (name != null && !name.isBlank())
-                ? userTypeRepository.findAllByArchivedAtIsNullAndNameContainingIgnoreCaseOrderByNameAsc(name, pageable)
-                : userTypeRepository.findAllByArchivedAtIsNullOrderByNameAsc(pageable);
-        return PaginationUtils.toPageResponse(result, this::toResponse);
+    public PageResponse<UserTypeResponse> findAll(UserTypeFilterRequest filter, Pageable pageable) {
+        Page<UserType> page = userTypeRepository.findAll(UserTypeSpecification.active(filter), pageable);
+        return PaginationUtils.toPageResponse(page, this::toResponse);
     }
 
     @Transactional(readOnly = true)

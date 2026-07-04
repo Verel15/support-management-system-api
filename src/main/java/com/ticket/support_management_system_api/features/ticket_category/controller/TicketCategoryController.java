@@ -2,17 +2,18 @@ package com.ticket.support_management_system_api.features.ticket_category.contro
 
 import java.util.UUID;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ticket.support_management_system_api.common.dto.DeleteConfirmationRequest;
@@ -20,6 +21,7 @@ import com.ticket.support_management_system_api.common.response.ApiResponse;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
+import com.ticket.support_management_system_api.features.ticket_category.dto.TicketCategoryFilterRequest;
 import com.ticket.support_management_system_api.features.ticket_category.dto.TicketCategoryRequest;
 import com.ticket.support_management_system_api.features.ticket_category.dto.TicketCategoryResponse;
 import com.ticket.support_management_system_api.features.ticket_category.service.TicketCategoryService;
@@ -38,9 +40,9 @@ public class TicketCategoryController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<TicketCategoryResponse>>> findAll(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(ApiResponse.success(ticketCategoryService.findAll(page, size)));
+            @ModelAttribute TicketCategoryFilterRequest filter,
+            Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success(ticketCategoryService.findAll(filter, pageable)));
     }
 
     @GetMapping("/{id}")

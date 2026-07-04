@@ -1,8 +1,8 @@
-package com.ticket.support_management_system_api.features.priority.repository;
+package com.ticket.support_management_system_api.features.ticket_type.repository;
 
 import com.ticket.support_management_system_api.common.utils.DateRangeUtils;
-import com.ticket.support_management_system_api.features.priority.dto.PriorityFilterRequest;
-import com.ticket.support_management_system_api.features.priority.entities.PriorityLevels;
+import com.ticket.support_management_system_api.features.ticket_type.dto.TicketTypeFilterRequest;
+import com.ticket.support_management_system_api.features.ticket_type.entities.TicketType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -10,9 +10,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PrioritySpecification {
+public class TicketTypeSpecification {
 
-    public static Specification<PriorityLevels> active(PriorityFilterRequest filter) {
+    public static Specification<TicketType> active(TicketTypeFilterRequest filter) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.isNull(root.get("archivedAt")));

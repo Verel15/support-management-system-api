@@ -2,19 +2,15 @@ package com.ticket.support_management_system_api.features.ticket_sub_category.re
 
 import com.ticket.support_management_system_api.features.ticket_sub_category.entities.TicketSubCategory;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface TicketSubCategoryRepository extends JpaRepository<TicketSubCategory, UUID> {
-
-    @EntityGraph(attributePaths = {"priorityLevel", "position", "category", "category.statusFlow"})
-    Page<TicketSubCategory> findAllByArchivedAtIsNull(Pageable pageable);
+public interface TicketSubCategoryRepository extends JpaRepository<TicketSubCategory, UUID>, JpaSpecificationExecutor<TicketSubCategory> {
 
     @EntityGraph(attributePaths = {"priorityLevel", "position", "category", "category.statusFlow"})
     Optional<TicketSubCategory> findByIdAndArchivedAtIsNull(UUID id);

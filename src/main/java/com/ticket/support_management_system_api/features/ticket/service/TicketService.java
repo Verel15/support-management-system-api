@@ -8,6 +8,7 @@ import com.ticket.support_management_system_api.features.notification.enums.Noti
 import com.ticket.support_management_system_api.features.notification.service.NotificationEventPublisher;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.common.utils.PaginationUtils;
+import com.ticket.support_management_system_api.common.utils.RemainingTimeUtils;
 import com.ticket.support_management_system_api.features.priority.entities.PriorityLevels;
 import com.ticket.support_management_system_api.features.priority.enums.EIntervalUnit;
 import com.ticket.support_management_system_api.features.project.entities.Project;
@@ -29,6 +30,7 @@ import com.ticket.support_management_system_api.features.ticket_sub_category.ent
 import com.ticket.support_management_system_api.features.ticket_sub_category.repository.TicketSubCategoryRepository;
 import com.ticket.support_management_system_api.features.user.entities.User;
 import com.ticket.support_management_system_api.features.user.repository.UserRepository;
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -302,14 +304,24 @@ public class TicketService {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.isNull(root.get("archivedAt")));
 
+            if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+                Expression<Integer> successLast = cb.<Integer>selectCase()
+                        .when(cb.equal(root.get("currentStatus").get("group"), StatusGroup.SUCCESS), 1)
+                        .otherwise(0);
+                query.orderBy(cb.asc(successLast), cb.asc(root.get("dueDate")));
+            }
+
             if (filter.getProjectId() != null) {
                 predicates.add(cb.equal(root.get("project").get("id"), filter.getProjectId()));
             }
             if (filter.getStatusId() != null) {
                 predicates.add(cb.equal(root.get("currentStatus").get("id"), filter.getStatusId()));
             }
+            if (filter.getStatusGroup() != null) {
+                predicates.add(cb.equal(root.get("currentStatus").get("group"), filter.getStatusGroup()));
+            }
             if (filter.getPriorityId() != null) {
-                predicates.add(cb.equal(root.get("priority").get("id"), filter.getPriorityId()));
+                predicates.add(cb.equal(root.get("subCategory").get("priorityLevel").get("id"), filter.getPriorityId()));
             }
             if (filter.getStatusFlowId() != null) {
                 predicates.add(cb.equal(root.get("statusFlow").get("id"), filter.getStatusFlowId()));
@@ -321,9 +333,34 @@ public class TicketService {
             if (Boolean.TRUE.equals(filter.getOverdue())) {
                 predicates.add(cb.lessThan(root.get("dueDate"), LocalDateTime.now()));
             }
+            if (filter.getRemainingTime() != null) {
+                LocalDateTime now = LocalDateTime.now();
+                predicates.add(switch (filter.getRemainingTime()) {
+                    case LESS_THAN_30_MIN -> cb.and(
+                            cb.greaterThanOrEqualTo(root.get("dueDate"), now),
+                            cb.lessThan(root.get("dueDate"), now.plusMinutes(30)));
+                    case LESS_THAN_1_DAY -> cb.and(
+                            cb.greaterThanOrEqualTo(root.get("dueDate"), now),
+                            cb.lessThan(root.get("dueDate"), now.plusDays(1)));
+                    case LESS_THAN_3_DAYS -> cb.and(
+                            cb.greaterThanOrEqualTo(root.get("dueDate"), now),
+                            cb.lessThan(root.get("dueDate"), now.plusDays(3)));
+                    case LESS_THAN_7_DAYS -> cb.and(
+                            cb.greaterThanOrEqualTo(root.get("dueDate"), now),
+                            cb.lessThan(root.get("dueDate"), now.plusDays(7)));
+                    case OVERDUE -> cb.lessThan(root.get("dueDate"), now);
+                });
+            }
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    private String resolveRemainingTime(Ticket ticket) {
+        if (ticket.getCurrentStatus().getGroup() == StatusGroup.SUCCESS) {
+            return RemainingTimeUtils.resolveClosed(ticket.getDueDate(), ticket.getUpdatedAt());
+        }
+        return RemainingTimeUtils.resolve(ticket.getDueDate());
     }
 
     private TicketListResponse toListResponse(Ticket ticket, List<TicketAssignee> assignees) {
@@ -343,6 +380,7 @@ public class TicketService {
                 .priorityIconShape(ticket.getSubCategory().getPriorityLevel().getIconShape())
                 .priorityIconColor(ticket.getSubCategory().getPriorityLevel().getIconColor())
                 .dueDate(ticket.getDueDate())
+                .remainingTime(resolveRemainingTime(ticket))
                 .createdAt(ticket.getCreatedAt())
                 .assignees(assignees.stream().map(a -> TicketAssigneeSummary.builder()
                         .id(a.getUser().getId())
@@ -376,6 +414,7 @@ public class TicketService {
                 .priorityIntervalValue(ticket.getSubCategory().getPriorityLevel().getIntervalValue())
                 .priorityIntervalUnit(ticket.getSubCategory().getPriorityLevel().getIntervalUnit())
                 .dueDate(ticket.getDueDate())
+                .remainingTime(resolveRemainingTime(ticket))
                 .requesterId(ticket.getRequester().getId())
                 .requesterFullName(ticket.getRequester().getFirstName() + " " + ticket.getRequester().getLastName())
                 .requesterProfileImageUrl(ticket.getRequester().getProfileImageUrl())

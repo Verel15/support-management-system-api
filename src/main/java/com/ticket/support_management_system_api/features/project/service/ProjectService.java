@@ -11,20 +11,26 @@ import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.common.utils.PaginationUtils;
 import com.ticket.support_management_system_api.features.company.entities.Company;
 import com.ticket.support_management_system_api.features.company.repository.CompanyRepository;
+import com.ticket.support_management_system_api.features.project.dto.ProjectFilterRequest;
 import com.ticket.support_management_system_api.features.project.dto.ProjectMemberSummaryResponse;
 import com.ticket.support_management_system_api.features.project.dto.ProjectRequest;
 import com.ticket.support_management_system_api.features.project.dto.ProjectResponse;
 import com.ticket.support_management_system_api.features.project.entities.Project;
 import com.ticket.support_management_system_api.features.project.enums.ProjectMemberRole;
+import com.ticket.support_management_system_api.features.project.enums.ProjectStatus;
 import com.ticket.support_management_system_api.features.project.repository.ProjectDocumentRepository;
 import com.ticket.support_management_system_api.features.project.repository.ProjectMemberRepository;
 import com.ticket.support_management_system_api.features.project.repository.ProjectRepository;
+import com.ticket.support_management_system_api.features.project.repository.ProjectSpecification;
 import com.ticket.support_management_system_api.features.user.repository.CustomerDetailsRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -44,11 +50,9 @@ public class ProjectService {
     private final NotificationEventPublisher notificationEventPublisher;
 
     @Transactional(readOnly = true)
-    public PageResponse<ProjectResponse> findAll(int page, int size) {
-        return PaginationUtils.toPageResponse(
-                projectRepository.findAllByArchivedAtIsNullOrderByCreatedAtDesc(PageRequest.of(page, size)),
-                this::toResponse
-        );
+    public PageResponse<ProjectResponse> findAll(ProjectFilterRequest filter, Pageable pageable) {
+        Page<Project> page = projectRepository.findAll(ProjectSpecification.active(filter), pageable);
+        return PaginationUtils.toPageResponse(page, this::toResponse);
     }
 
     @Transactional(readOnly = true)
@@ -57,16 +61,16 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<ProjectResponse> findMy(int page, int size, JwtPrincipal user) {
+    public PageResponse<ProjectResponse> findMy(ProjectFilterRequest filter, Pageable pageable, JwtPrincipal user) {
         if (user.accountType() != AccountType.CUSTOMER) {
-            return findAll(page, size);
+            return findAll(filter, pageable);
         }
         UUID companyId = customerCompanyId(user.userId());
         List<UUID> memberProjectIds = nonEmpty(memberRepository.findProjectIdByUserIdAndArchivedAtIsNull(user.userId()));
-        return PaginationUtils.toPageResponse(
-                projectRepository.findAllVisibleToCustomer(companyId, memberProjectIds, PageRequest.of(page, size)),
-                this::toResponse
-        );
+        Specification<Project> spec = ProjectSpecification.active(filter)
+                .and(ProjectSpecification.visibleToCustomer(companyId, memberProjectIds));
+        Page<Project> page = projectRepository.findAll(spec, pageable);
+        return PaginationUtils.toPageResponse(page, this::toResponse);
     }
 
     @Transactional(readOnly = true)
@@ -143,6 +147,17 @@ public class ProjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("ไม่พบโปรเจค id: " + id));
     }
 
+    private ProjectStatus resolveStatus(Project project) {
+        LocalDate today = LocalDate.now();
+        if (project.getStartDate().isAfter(today)) {
+            return ProjectStatus.WAITING;
+        }
+        if (project.getEndDate().isBefore(today)) {
+            return ProjectStatus.CLOSED;
+        }
+        return ProjectStatus.OPEN;
+    }
+
     private ProjectResponse toResponse(Project project) {
         long customerCount = memberRepository.countByProjectIdAndRoleAndArchivedAtIsNull(project.getId(), ProjectMemberRole.CUSTOMER);
         long assigneeCount = memberRepository.countByProjectIdAndRoleAndArchivedAtIsNull(project.getId(), ProjectMemberRole.ASSIGNEE);
@@ -166,6 +181,7 @@ public class ProjectService {
                 .companyName(project.getCompany().getName())
                 .startDate(project.getStartDate())
                 .endDate(project.getEndDate())
+                .status(resolveStatus(project))
                 .totalMembers(customerCount + assigneeCount)
                 .customerCount(customerCount)
                 .assigneeCount(assigneeCount)

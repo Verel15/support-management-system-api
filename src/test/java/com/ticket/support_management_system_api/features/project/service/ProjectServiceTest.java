@@ -6,6 +6,7 @@ import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal
 import com.ticket.support_management_system_api.features.company.entities.Company;
 import com.ticket.support_management_system_api.features.company.repository.CompanyRepository;
 import com.ticket.support_management_system_api.features.notification.service.NotificationEventPublisher;
+import com.ticket.support_management_system_api.features.project.dto.ProjectFilterRequest;
 import com.ticket.support_management_system_api.features.project.entities.Project;
 import com.ticket.support_management_system_api.features.project.repository.ProjectDocumentRepository;
 import com.ticket.support_management_system_api.features.project.repository.ProjectMemberRepository;
@@ -20,7 +21,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Optional;
@@ -67,7 +70,12 @@ class ProjectServiceTest {
         Company company = Company.builder().name("acme").build();
         company.setId(companyId);
 
-        project = Project.builder().name("proj").company(company).build();
+        project = Project.builder()
+                .name("proj")
+                .company(company)
+                .startDate(java.time.LocalDate.now().minusDays(1))
+                .endDate(java.time.LocalDate.now().plusDays(1))
+                .build();
         project.setId(UUID.randomUUID());
     }
 
@@ -92,12 +100,11 @@ class ProjectServiceTest {
     void findAll_usesUnscopedQuery() {
         stubProjectResponseLookups();
         Page<Project> page = new PageImpl<>(List.of(project));
-        when(projectRepository.findAllByArchivedAtIsNullOrderByCreatedAtDesc(any(Pageable.class))).thenReturn(page);
+        when(projectRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
 
-        var result = projectService.findAll(0, 10);
+        var result = projectService.findAll(new ProjectFilterRequest(), PageRequest.of(0, 10));
 
         assertThat(result.getContent()).hasSize(1);
-        verify(projectRepository, never()).findAllVisibleToCustomer(any(), anyList(), any());
     }
 
     @Test
@@ -150,29 +157,28 @@ class ProjectServiceTest {
                 .thenReturn(Optional.of(customerDetailsFor(companyId)));
         when(memberRepository.findProjectIdByUserIdAndArchivedAtIsNull(customerUserId)).thenReturn(List.of());
         Page<Project> page = new PageImpl<>(List.of(project));
-        when(projectRepository.findAllVisibleToCustomer(eq(companyId), anyList(), any(Pageable.class))).thenReturn(page);
+        when(projectRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
 
         JwtPrincipal customer = new JwtPrincipal(customerUserId, "a@b.com", AccountType.CUSTOMER, UUID.randomUUID(), List.of());
 
-        var result = projectService.findMy(0, 10, customer);
+        var result = projectService.findMy(new ProjectFilterRequest(), PageRequest.of(0, 10), customer);
 
         assertThat(result.getContent()).hasSize(1);
-        verify(projectRepository, times(1)).findAllVisibleToCustomer(eq(companyId), anyList(), any(Pageable.class));
-        verify(projectRepository, never()).findAllByArchivedAtIsNullOrderByCreatedAtDesc(any());
+        verify(projectRepository, times(1)).findAll(any(Specification.class), any(Pageable.class));
     }
 
     @Test
     void findMy_externalUser_usesUnscopedQuery() {
         stubProjectResponseLookups();
         Page<Project> page = new PageImpl<>(List.of(project));
-        when(projectRepository.findAllByArchivedAtIsNullOrderByCreatedAtDesc(any(Pageable.class))).thenReturn(page);
+        when(projectRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
 
         JwtPrincipal staff = new JwtPrincipal(UUID.randomUUID(), "a@b.com", AccountType.EXTERNAL, UUID.randomUUID(), List.of());
 
-        var result = projectService.findMy(0, 10, staff);
+        var result = projectService.findMy(new ProjectFilterRequest(), PageRequest.of(0, 10), staff);
 
         assertThat(result.getContent()).hasSize(1);
-        verify(projectRepository, never()).findAllVisibleToCustomer(any(), anyList(), any());
+        verify(customerDetailsRepository, never()).findByUserId(any());
     }
 
     private CustomerDetails customerDetailsFor(UUID companyId) {

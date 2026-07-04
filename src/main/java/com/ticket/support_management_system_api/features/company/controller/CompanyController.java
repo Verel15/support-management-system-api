@@ -28,8 +28,10 @@ public class CompanyController {
     private final ReauthenticationService reauthenticationService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<CompanyResponse>>> findAll(@AuthenticationPrincipal JwtPrincipal user) {
-        return ResponseEntity.ok(ApiResponse.success(companyService.findAll()));
+    public ResponseEntity<ApiResponse<List<CompanyResponse>>> findAll(
+            @AuthenticationPrincipal JwtPrincipal user,
+            @RequestParam(required = false) String keyword) {
+        return ResponseEntity.ok(ApiResponse.success(companyService.findAll(keyword)));
     }
 
     @GetMapping("/{id}")

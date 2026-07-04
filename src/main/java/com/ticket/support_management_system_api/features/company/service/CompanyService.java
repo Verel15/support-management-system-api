@@ -26,9 +26,11 @@ public class CompanyService {
     private final CustomerDetailsRepository customerDetailsRepository;
 
     @Transactional(readOnly = true)
-    public List<CompanyResponse> findAll() {
-        return companyRepository.findAllByArchivedAtIsNullOrderByNameAsc()
-                .stream()
+    public List<CompanyResponse> findAll(String keyword) {
+        List<Company> companies = (keyword == null || keyword.isBlank())
+                ? companyRepository.findAllByArchivedAtIsNullOrderByCreatedAtDesc()
+                : companyRepository.findAllByArchivedAtIsNullAndNameContainingIgnoreCaseOrderByCreatedAtDesc(keyword.trim());
+        return companies.stream()
                 .map(this::toResponse)
                 .toList();
     }

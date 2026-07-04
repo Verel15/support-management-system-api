@@ -28,6 +28,7 @@ public class TicketListResponse {
     private EPriorityIconKey priorityIconShape;
     private EPriorityColorKey priorityIconColor;
     private LocalDateTime dueDate;
+    private String remainingTime;
     private LocalDateTime createdAt;
     private List<TicketAssigneeSummary> assignees;
 }

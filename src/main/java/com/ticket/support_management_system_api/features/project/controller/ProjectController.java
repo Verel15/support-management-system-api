@@ -5,12 +5,14 @@ import com.ticket.support_management_system_api.common.response.ApiResponse;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
+import com.ticket.support_management_system_api.features.project.dto.ProjectFilterRequest;
 import com.ticket.support_management_system_api.features.project.dto.ProjectRequest;
 import com.ticket.support_management_system_api.features.project.dto.ProjectResponse;
 import com.ticket.support_management_system_api.features.project.service.ProjectService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,9 +30,9 @@ public class ProjectController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ProjectResponse>>> findAll(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(ApiResponse.success(projectService.findAll(page, size)));
+            @ModelAttribute ProjectFilterRequest filter,
+            Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success(projectService.findAll(filter, pageable)));
     }
 
     @GetMapping("/{id}")
@@ -40,10 +42,10 @@ public class ProjectController {
 
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<PageResponse<ProjectResponse>>> findMy(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @ModelAttribute ProjectFilterRequest filter,
+            Pageable pageable,
             @AuthenticationPrincipal JwtPrincipal user) {
-        return ResponseEntity.ok(ApiResponse.success(projectService.findMy(page, size, user)));
+        return ResponseEntity.ok(ApiResponse.success(projectService.findMy(filter, pageable, user)));
     }
 
     @GetMapping("/my/{id}")

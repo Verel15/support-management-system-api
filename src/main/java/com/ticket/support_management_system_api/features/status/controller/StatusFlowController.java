@@ -5,12 +5,15 @@ import com.ticket.support_management_system_api.common.response.ApiResponse;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
+import com.ticket.support_management_system_api.features.status.dto.StatusFlowFilterRequest;
 import com.ticket.support_management_system_api.features.status.dto.StatusFlowRequest;
 import com.ticket.support_management_system_api.features.status.dto.StatusFlowResponse;
 import com.ticket.support_management_system_api.features.status.service.StatusFlowService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,9 +31,9 @@ public class StatusFlowController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<StatusFlowResponse>>> findAll(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(ApiResponse.success(statusFlowService.findAll(page, size)));
+            @ModelAttribute StatusFlowFilterRequest filter,
+            @PageableDefault(size = 10, sort = "name") Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success(statusFlowService.findAll(filter, pageable)));
     }
 
     @GetMapping("/{id}")

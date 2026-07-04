@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,11 +15,13 @@ import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.common.utils.PaginationUtils;
 import com.ticket.support_management_system_api.features.ticket_category.entities.TicketCategory;
 import com.ticket.support_management_system_api.features.ticket_category.repository.TicketCategoryRepository;
+import com.ticket.support_management_system_api.features.ticket_type.dto.TicketTypeFilterRequest;
 import com.ticket.support_management_system_api.features.ticket_type.dto.TicketTypeRequest;
 import com.ticket.support_management_system_api.features.ticket_type.dto.TicketTypeResponse;
 import com.ticket.support_management_system_api.features.ticket_type.dto.TicketTypeSelectorResponse;
 import com.ticket.support_management_system_api.features.ticket_type.entities.TicketType;
 import com.ticket.support_management_system_api.features.ticket_type.repository.TicketTypeRepository;
+import com.ticket.support_management_system_api.features.ticket_type.repository.TicketTypeSpecification;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,12 +34,9 @@ public class TicketTypeService {
     private final TicketCategoryRepository ticketCategoryRepository;
 
     @Transactional(readOnly = true)
-    public PageResponse<TicketTypeResponse> findAll(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return PaginationUtils.toPageResponse(
-                ticketTypeRepository.findAllByArchivedAtIsNullOrderByCreatedAt(pageable),
-                this::toResponse
-        );
+    public PageResponse<TicketTypeResponse> findAll(TicketTypeFilterRequest filter, Pageable pageable) {
+        Page<TicketType> page = ticketTypeRepository.findAll(TicketTypeSpecification.active(filter), pageable);
+        return PaginationUtils.toPageResponse(page, this::toResponse);
     }
 
     @Transactional(readOnly = true)
