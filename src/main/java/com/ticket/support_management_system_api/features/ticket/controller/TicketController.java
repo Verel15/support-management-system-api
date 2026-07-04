@@ -38,6 +38,23 @@ public class TicketController {
         return ResponseEntity.ok(ApiResponse.success(ticketService.findById(id)));
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<PageResponse<TicketListResponse>>> findMy(
+            @ModelAttribute TicketFilterRequest filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal JwtPrincipal user) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return ResponseEntity.ok(ApiResponse.success(ticketService.findMy(filter, pageable, user)));
+    }
+
+    @GetMapping("/my/{id}")
+    public ResponseEntity<ApiResponse<TicketDetailResponse>> findMyById(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal JwtPrincipal user) {
+        return ResponseEntity.ok(ApiResponse.success(ticketService.findMyById(id, user)));
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<TicketDetailResponse>> create(
             @Valid @RequestBody CreateTicketRequest request,

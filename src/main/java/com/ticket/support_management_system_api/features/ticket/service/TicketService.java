@@ -1,7 +1,9 @@
 package com.ticket.support_management_system_api.features.ticket.service;
 
+import com.ticket.support_management_system_api.common.enums.AccountType;
 import com.ticket.support_management_system_api.common.exception.BadRequestException;
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
+import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.notification.enums.NotificationType;
 import com.ticket.support_management_system_api.features.notification.service.NotificationEventPublisher;
 import com.ticket.support_management_system_api.common.response.PageResponse;
@@ -59,7 +61,32 @@ public class TicketService {
 
     @Transactional(readOnly = true)
     public PageResponse<TicketListResponse> findAll(TicketFilterRequest filter, Pageable pageable) {
-        Specification<Ticket> spec = buildSpec(filter);
+        return queryTickets(buildSpec(filter), pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public TicketDetailResponse findById(UUID id) {
+        Ticket ticket = getOrThrow(id);
+        List<TicketAssignee> assignees = ticketAssigneeRepository.findAllByTicketIdAndArchivedAtIsNull(id);
+        return toDetailResponse(ticket, assignees);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<TicketListResponse> findMy(TicketFilterRequest filter, Pageable pageable, JwtPrincipal user) {
+        return queryTickets(buildMySpec(filter, user), pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public TicketDetailResponse findMyById(UUID id, JwtPrincipal user) {
+        Ticket ticket = getOrThrow(id);
+        if (user.accountType() == AccountType.CUSTOMER && !ticket.getRequester().getId().equals(user.userId())) {
+            throw new ResourceNotFoundException("ไม่พบ Ticket id: " + id);
+        }
+        List<TicketAssignee> assignees = ticketAssigneeRepository.findAllByTicketIdAndArchivedAtIsNull(id);
+        return toDetailResponse(ticket, assignees);
+    }
+
+    private PageResponse<TicketListResponse> queryTickets(Specification<Ticket> spec, Pageable pageable) {
         var page = ticketRepository.findAll(spec, pageable);
 
         List<UUID> ticketIds = page.getContent().stream().map(Ticket::getId).toList();
@@ -71,13 +98,6 @@ public class TicketService {
 
         final Map<UUID, List<TicketAssignee>> finalAssigneeMap = assigneeMap;
         return PaginationUtils.toPageResponse(page, t -> toListResponse(t, finalAssigneeMap.getOrDefault(t.getId(), List.of())));
-    }
-
-    @Transactional(readOnly = true)
-    public TicketDetailResponse findById(UUID id) {
-        Ticket ticket = getOrThrow(id);
-        List<TicketAssignee> assignees = ticketAssigneeRepository.findAllByTicketIdAndArchivedAtIsNull(id);
-        return toDetailResponse(ticket, assignees);
     }
 
     public TicketDetailResponse create(CreateTicketRequest request, UUID actorUserId) {
@@ -268,6 +288,13 @@ public class TicketService {
             case MONTH -> ChronoUnit.MONTHS;
             case YEAR -> ChronoUnit.YEARS;
         };
+    }
+
+    private Specification<Ticket> buildMySpec(TicketFilterRequest filter, JwtPrincipal user) {
+        return buildSpec(filter).and((root, query, cb) ->
+                user.accountType() == AccountType.CUSTOMER
+                        ? cb.equal(root.get("requester").get("id"), user.userId())
+                        : cb.conjunction());
     }
 
     private Specification<Ticket> buildSpec(TicketFilterRequest filter) {

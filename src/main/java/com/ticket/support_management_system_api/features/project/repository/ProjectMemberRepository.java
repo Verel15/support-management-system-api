@@ -15,6 +15,8 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
     List<ProjectMember> findAllByProjectIdAndArchivedAtIsNull(@Param("projectId") UUID projectId);
     List<ProjectMember> findAllByProjectIdAndRoleAndArchivedAtIsNull(UUID projectId, ProjectMemberRole role);
     boolean existsByProjectIdAndUserIdAndRoleAndArchivedAtIsNull(UUID projectId, UUID userId, ProjectMemberRole role);
+    boolean existsByProjectIdAndUserIdAndArchivedAtIsNull(UUID projectId, UUID userId);
+    List<UUID> findProjectIdByUserIdAndArchivedAtIsNull(UUID userId);
     Optional<ProjectMember> findByIdAndProjectIdAndArchivedAtIsNull(UUID id, UUID projectId);
     long countByProjectIdAndArchivedAtIsNull(UUID projectId);
     long countByProjectIdAndRoleAndArchivedAtIsNull(UUID projectId, ProjectMemberRole role);

@@ -34,6 +34,21 @@ public class ProjectController {
         return ResponseEntity.ok(ApiResponse.success(projectService.findById(id)));
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<PageResponse<ProjectResponse>>> findMy(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal JwtPrincipal user) {
+        return ResponseEntity.ok(ApiResponse.success(projectService.findMy(page, size, user)));
+    }
+
+    @GetMapping("/my/{id}")
+    public ResponseEntity<ApiResponse<ProjectResponse>> findMyById(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal JwtPrincipal user) {
+        return ResponseEntity.ok(ApiResponse.success(projectService.findMyById(id, user)));
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<ProjectResponse>> create(@Valid @RequestBody ProjectRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)

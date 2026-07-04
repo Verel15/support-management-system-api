@@ -2,6 +2,8 @@ package com.ticket.support_management_system_api.features.project.service;
 
 import com.ticket.support_management_system_api.common.exception.DuplicateResourceException;
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
+import com.ticket.support_management_system_api.common.enums.AccountType;
+import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.notification.enums.NotificationType;
 import com.ticket.support_management_system_api.features.notification.service.NotificationEventPublisher;
 import java.util.Map;
@@ -17,6 +19,7 @@ import com.ticket.support_management_system_api.features.project.enums.ProjectMe
 import com.ticket.support_management_system_api.features.project.repository.ProjectDocumentRepository;
 import com.ticket.support_management_system_api.features.project.repository.ProjectMemberRepository;
 import com.ticket.support_management_system_api.features.project.repository.ProjectRepository;
+import com.ticket.support_management_system_api.features.user.repository.CustomerDetailsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -31,10 +34,13 @@ import java.util.UUID;
 @Transactional
 public class ProjectService {
 
+    private static final UUID NO_MATCH_ID = new UUID(0L, 0L);
+
     private final ProjectRepository projectRepository;
     private final CompanyRepository companyRepository;
     private final ProjectMemberRepository memberRepository;
     private final ProjectDocumentRepository documentRepository;
+    private final CustomerDetailsRepository customerDetailsRepository;
     private final NotificationEventPublisher notificationEventPublisher;
 
     @Transactional(readOnly = true)
@@ -48,6 +54,42 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public ProjectResponse findById(UUID id) {
         return toResponse(getOrThrow(id));
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<ProjectResponse> findMy(int page, int size, JwtPrincipal user) {
+        if (user.accountType() != AccountType.CUSTOMER) {
+            return findAll(page, size);
+        }
+        UUID companyId = customerCompanyId(user.userId());
+        List<UUID> memberProjectIds = nonEmpty(memberRepository.findProjectIdByUserIdAndArchivedAtIsNull(user.userId()));
+        return PaginationUtils.toPageResponse(
+                projectRepository.findAllVisibleToCustomer(companyId, memberProjectIds, PageRequest.of(page, size)),
+                this::toResponse
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public ProjectResponse findMyById(UUID id, JwtPrincipal user) {
+        Project project = getOrThrow(id);
+        if (user.accountType() == AccountType.CUSTOMER) {
+            UUID companyId = customerCompanyId(user.userId());
+            List<UUID> memberProjectIds = nonEmpty(memberRepository.findProjectIdByUserIdAndArchivedAtIsNull(user.userId()));
+            if (!projectRepository.existsVisibleToCustomer(id, companyId, memberProjectIds)) {
+                throw new ResourceNotFoundException("ไม่พบโปรเจค id: " + id);
+            }
+        }
+        return toResponse(project);
+    }
+
+    private UUID customerCompanyId(UUID userId) {
+        return customerDetailsRepository.findByUserId(userId)
+                .map(cd -> cd.getCompany().getId())
+                .orElse(NO_MATCH_ID);
+    }
+
+    private List<UUID> nonEmpty(List<UUID> ids) {
+        return ids.isEmpty() ? List.of(NO_MATCH_ID) : ids;
     }
 
     public ProjectResponse create(ProjectRequest request) {
