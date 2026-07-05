@@ -22,6 +22,8 @@ import com.ticket.support_management_system_api.features.project.repository.Proj
 import com.ticket.support_management_system_api.features.project.repository.ProjectMemberRepository;
 import com.ticket.support_management_system_api.features.project.repository.ProjectRepository;
 import com.ticket.support_management_system_api.features.project.repository.ProjectSpecification;
+import com.ticket.support_management_system_api.features.status.enums.EStatusGroup;
+import com.ticket.support_management_system_api.features.ticket.repository.TicketRepository;
 import com.ticket.support_management_system_api.features.user.repository.CustomerDetailsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -48,6 +50,7 @@ public class ProjectService {
     private final ProjectDocumentRepository documentRepository;
     private final CustomerDetailsRepository customerDetailsRepository;
     private final NotificationEventPublisher notificationEventPublisher;
+    private final TicketRepository ticketRepository;
 
     @Transactional(readOnly = true)
     public PageResponse<ProjectResponse> findAll(ProjectFilterRequest filter, Pageable pageable) {
@@ -162,6 +165,8 @@ public class ProjectService {
         long customerCount = memberRepository.countByProjectIdAndRoleAndArchivedAtIsNull(project.getId(), EProjectMemberRole.CUSTOMER);
         long assigneeCount = memberRepository.countByProjectIdAndRoleAndArchivedAtIsNull(project.getId(), EProjectMemberRole.ASSIGNEE);
         long documentCount = documentRepository.countByProjectIdAndArchivedAtIsNull(project.getId());
+        long totalTickets = ticketRepository.countByProjectIdAndArchivedAtIsNull(project.getId());
+        long successTicketCount = ticketRepository.countByProjectIdAndCurrentStatus_GroupAndArchivedAtIsNull(project.getId(), EStatusGroup.SUCCESS);
 
         List<ProjectMemberSummaryResponse> members = memberRepository
                 .findAllByProjectIdAndArchivedAtIsNull(project.getId())
@@ -186,6 +191,8 @@ public class ProjectService {
                 .customerCount(customerCount)
                 .assigneeCount(assigneeCount)
                 .documentCount(documentCount)
+                .totalTickets(totalTickets)
+                .successTicketCount(successTicketCount)
                 .members(members)
                 .createdAt(project.getCreatedAt())
                 .updatedAt(project.getUpdatedAt())

@@ -1,5 +1,6 @@
 package com.ticket.support_management_system_api.features.ticket.repository;
 
+import com.ticket.support_management_system_api.features.status.enums.EStatusGroup;
 import com.ticket.support_management_system_api.features.ticket.entities.Ticket;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,4 +15,8 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID>, JpaSpecif
     Optional<Ticket> findByIdAndArchivedAtIsNull(UUID id);
 
     Page<Ticket> findAllByArchivedAtIsNullOrderByCreatedAtDesc(Pageable pageable);
+
+    long countByProjectIdAndArchivedAtIsNull(UUID projectId);
+
+    long countByProjectIdAndCurrentStatus_GroupAndArchivedAtIsNull(UUID projectId, EStatusGroup group);
 }

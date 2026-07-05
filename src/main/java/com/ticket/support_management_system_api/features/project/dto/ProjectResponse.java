@@ -29,6 +29,9 @@ public class ProjectResponse {
     private long assigneeCount;
     private long documentCount;
 
+    private long totalTickets;
+    private long successTicketCount;
+
     private List<ProjectMemberSummaryResponse> members;
 
     private LocalDateTime createdAt;
