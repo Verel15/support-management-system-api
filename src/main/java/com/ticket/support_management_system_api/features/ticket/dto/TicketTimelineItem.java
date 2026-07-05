@@ -1,6 +1,6 @@
 package com.ticket.support_management_system_api.features.ticket.dto;
 
-import com.ticket.support_management_system_api.features.ticket.enums.TicketCommentType;
+import com.ticket.support_management_system_api.features.ticket.enums.ETicketCommentType;
 import lombok.Builder;
 import lombok.Data;
 
@@ -12,7 +12,7 @@ import java.util.UUID;
 public class TicketTimelineItem {
 
     private UUID id;
-    private TicketCommentType type;
+    private ETicketCommentType type;
     private LocalDateTime createdAt;
 
     private UUID authorId;

@@ -1,7 +1,7 @@
 package com.ticket.support_management_system_api.features.notification.dto;
 
-import com.ticket.support_management_system_api.features.notification.enums.NotificationCategory;
-import com.ticket.support_management_system_api.features.notification.enums.NotificationType;
+import com.ticket.support_management_system_api.features.notification.enums.ENotificationCategory;
+import com.ticket.support_management_system_api.features.notification.enums.ENotificationType;
 import lombok.Builder;
 import lombok.Data;
 
@@ -13,8 +13,8 @@ import java.util.UUID;
 @Builder
 public class NotificationResponse {
     private UUID id;
-    private NotificationType type;
-    private NotificationCategory category;
+    private ENotificationType type;
+    private ENotificationCategory category;
     private String entityType;
     private UUID entityId;
     private String title;

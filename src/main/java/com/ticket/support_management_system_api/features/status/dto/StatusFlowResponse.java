@@ -1,6 +1,6 @@
 package com.ticket.support_management_system_api.features.status.dto;
 
-import com.ticket.support_management_system_api.features.status.enums.StatusGroup;
+import com.ticket.support_management_system_api.features.status.enums.EStatusGroup;
 import lombok.Builder;
 import lombok.Data;
 
@@ -26,7 +26,7 @@ public class StatusFlowResponse {
     @Builder
     public static class StatusItemResponse {
         private UUID id;
-        private StatusGroup group;
+        private EStatusGroup group;
         private String name;
         private Integer sequence;
         private Boolean isSystem;

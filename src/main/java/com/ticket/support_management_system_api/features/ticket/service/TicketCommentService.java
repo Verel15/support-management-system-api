@@ -8,7 +8,7 @@ import com.ticket.support_management_system_api.features.ticket.dto.TicketTimeli
 import com.ticket.support_management_system_api.features.ticket.entities.Ticket;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketComment;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketStatusLog;
-import com.ticket.support_management_system_api.features.ticket.enums.TicketCommentType;
+import com.ticket.support_management_system_api.features.ticket.enums.ETicketCommentType;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketCommentRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketStatusLogRepository;
@@ -69,7 +69,7 @@ public class TicketCommentService {
                 .ticket(ticket)
                 .author(author)
                 .content(request.getContent())
-                .commentType(TicketCommentType.COMMENT)
+                .commentType(ETicketCommentType.COMMENT)
                 .build();
         TicketComment saved = commentRepository.save(comment);
 
@@ -108,7 +108,7 @@ public class TicketCommentService {
         User author = comment.getAuthor();
         return TicketTimelineItem.builder()
                 .id(comment.getId())
-                .type(TicketCommentType.COMMENT)
+                .type(ETicketCommentType.COMMENT)
                 .createdAt(comment.getCreatedAt())
                 .authorId(author.getId())
                 .authorFullName(author.getFirstName() + " " + author.getLastName())
@@ -121,7 +121,7 @@ public class TicketCommentService {
         User changedBy = log.getChangedBy();
         return TicketTimelineItem.builder()
                 .id(log.getId())
-                .type(TicketCommentType.STATUS_CHANGE)
+                .type(ETicketCommentType.STATUS_CHANGE)
                 .createdAt(log.getCreatedAt())
                 .authorId(changedBy.getId())
                 .authorFullName(changedBy.getFirstName() + " " + changedBy.getLastName())

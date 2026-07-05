@@ -1,6 +1,6 @@
 package com.ticket.support_management_system_api.features.project.dto;
 
-import com.ticket.support_management_system_api.features.project.enums.ProjectMemberRole;
+import com.ticket.support_management_system_api.features.project.enums.EProjectMemberRole;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -13,5 +13,5 @@ public class ProjectMemberRequest {
     private UUID userId;
 
     @NotNull(message = "บทบาทต้องไม่ว่าง")
-    private ProjectMemberRole role;
+    private EProjectMemberRole role;
 }

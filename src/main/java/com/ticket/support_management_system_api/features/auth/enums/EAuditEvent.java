@@ -1,6 +1,6 @@
 package com.ticket.support_management_system_api.features.auth.enums;
 
-public enum AuditEvent {
+public enum EAuditEvent {
     LOGIN_SUCCESS,
     LOGIN_FAILED,
     ACCOUNT_LOCKED,

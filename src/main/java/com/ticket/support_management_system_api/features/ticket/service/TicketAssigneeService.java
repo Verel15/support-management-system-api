@@ -2,7 +2,7 @@ package com.ticket.support_management_system_api.features.ticket.service;
 
 import com.ticket.support_management_system_api.common.exception.DuplicateResourceException;
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
-import com.ticket.support_management_system_api.features.notification.enums.NotificationType;
+import com.ticket.support_management_system_api.features.notification.enums.ENotificationType;
 import com.ticket.support_management_system_api.features.notification.service.NotificationEventPublisher;
 import com.ticket.support_management_system_api.features.ticket.dto.AddAssigneeRequest;
 import com.ticket.support_management_system_api.features.ticket.dto.TicketAssigneeResponse;
@@ -58,7 +58,7 @@ public class TicketAssigneeService {
 
         TicketAssigneeResponse response = toResponse(assigneeRepository.save(assignee));
         notificationEventPublisher.publishTicketEvent(
-                NotificationType.TICKET_ASSIGNED, ticketId, null,
+                ENotificationType.TICKET_ASSIGNED, ticketId, null,
                 "มอบหมาย Ticket ให้ " + user.getFirstName() + " " + user.getLastName(),
                 user.getFirstName() + " " + user.getLastName() + " ถูกมอบหมายให้รับผิดชอบ Ticket",
                 Map.of("assigneeName", user.getFirstName() + " " + user.getLastName()));
@@ -73,7 +73,7 @@ public class TicketAssigneeService {
         assignee.setArchivedBy(actorUserId);
         assigneeRepository.save(assignee);
         notificationEventPublisher.publishTicketEvent(
-                NotificationType.TICKET_UNASSIGNED, ticketId, actorUserId,
+                ENotificationType.TICKET_UNASSIGNED, ticketId, actorUserId,
                 "ยกเลิกการมอบหมาย Ticket",
                 "ยกเลิกการมอบหมายผู้รับผิดชอบออกจาก Ticket",
                 Map.of());

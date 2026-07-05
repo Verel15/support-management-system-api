@@ -8,7 +8,7 @@ import com.ticket.support_management_system_api.features.user.repository.Externa
 import com.ticket.support_management_system_api.features.user.repository.UserRepository;
 import com.ticket.support_management_system_api.features.user_type.repository.UserTypeRepository;
 import com.ticket.support_management_system_api.features.user_type.entities.UserType;
-import com.ticket.support_management_system_api.features.user_type.enums.MyTicketAccess;
+import com.ticket.support_management_system_api.features.user_type.enums.EMyTicketAccess;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,7 +46,7 @@ public class DataInitializer implements ApplicationRunner {
         UserType adminType = userTypeRepository.findByName("Superadmin").orElseGet(() ->
                 userTypeRepository.save(UserType.builder()
                         .name("Superadmin")
-                        .myTicketAccess(MyTicketAccess.ADMIN)
+                        .myTicketAccess(EMyTicketAccess.ADMIN)
                         .allProjectAccess(true)
                         .notificationAccess(true)
                         .dashboardAccess(true)

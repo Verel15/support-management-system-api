@@ -1,6 +1,6 @@
 package com.ticket.support_management_system_api.features.auth.entities;
 
-import com.ticket.support_management_system_api.features.auth.enums.AuditEvent;
+import com.ticket.support_management_system_api.features.auth.enums.EAuditEvent;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,7 +26,7 @@ public class AuthAuditLog {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private AuditEvent event;
+    private EAuditEvent event;
 
     @Column(name = "ip_address")
     private String ipAddress;

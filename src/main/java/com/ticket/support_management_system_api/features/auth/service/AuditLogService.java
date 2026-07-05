@@ -3,7 +3,7 @@ package com.ticket.support_management_system_api.features.auth.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ticket.support_management_system_api.features.auth.entities.AuthAuditLog;
-import com.ticket.support_management_system_api.features.auth.enums.AuditEvent;
+import com.ticket.support_management_system_api.features.auth.enums.EAuditEvent;
 import com.ticket.support_management_system_api.features.auth.repository.AuthAuditLogRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ public class AuditLogService {
 
     @Async("auditLogExecutor")
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void log(AuditEvent event, UUID userId, HttpServletRequest request, UUID deviceSessionId, Map<String, Object> metadata) {
+    public void log(EAuditEvent event, UUID userId, HttpServletRequest request, UUID deviceSessionId, Map<String, Object> metadata) {
         try {
             AuthAuditLog entry = AuthAuditLog.builder()
                     .userId(userId)

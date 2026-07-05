@@ -4,7 +4,7 @@ import com.ticket.support_management_system_api.common.enums.AccountType;
 import com.ticket.support_management_system_api.common.exception.BadRequestException;
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
-import com.ticket.support_management_system_api.features.notification.enums.NotificationType;
+import com.ticket.support_management_system_api.features.notification.enums.ENotificationType;
 import com.ticket.support_management_system_api.features.notification.service.NotificationEventPublisher;
 import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.common.utils.PaginationUtils;
@@ -15,7 +15,7 @@ import com.ticket.support_management_system_api.features.project.entities.Projec
 import com.ticket.support_management_system_api.features.project.repository.ProjectRepository;
 import com.ticket.support_management_system_api.features.status.entities.StatusFlows;
 import com.ticket.support_management_system_api.features.status.entities.Statuses;
-import com.ticket.support_management_system_api.features.status.enums.StatusGroup;
+import com.ticket.support_management_system_api.features.status.enums.EStatusGroup;
 import com.ticket.support_management_system_api.features.status.repository.StatusRepository;
 import com.ticket.support_management_system_api.features.ticket.dto.*;
 import com.ticket.support_management_system_api.features.ticket.entities.Ticket;
@@ -144,7 +144,7 @@ public class TicketService {
         statusLogRepository.save(initialLog);
 
         notificationEventPublisher.publishTicketEvent(
-                NotificationType.TICKET_CREATED, ticket.getId(), actorUserId,
+                ENotificationType.TICKET_CREATED, ticket.getId(), actorUserId,
                 "Ticket ใหม่: " + ticket.getTitle(),
                 actor.getFirstName() + " " + actor.getLastName() + " สร้าง Ticket ใหม่",
                 Map.of("ticketTitle", ticket.getTitle()));
@@ -191,7 +191,7 @@ public class TicketService {
 
         ticket = ticketRepository.save(ticket);
         notificationEventPublisher.publishTicketEvent(
-                NotificationType.TICKET_UPDATED, ticket.getId(), actorUserId,
+                ENotificationType.TICKET_UPDATED, ticket.getId(), actorUserId,
                 "อัพเดต Ticket: " + ticket.getTitle(),
                 "มีการอัพเดตข้อมูล Ticket",
                 Map.of("ticketTitle", ticket.getTitle()));
@@ -206,7 +206,7 @@ public class TicketService {
         ticket.setArchivedBy(actorUserId);
         ticketRepository.save(ticket);
         notificationEventPublisher.publishTicketEvent(
-                NotificationType.TICKET_DELETED, id, actorUserId,
+                ENotificationType.TICKET_DELETED, id, actorUserId,
                 "ลบ Ticket: " + ticket.getTitle(),
                 "Ticket ถูกลบออกจากระบบ",
                 Map.of("ticketTitle", ticket.getTitle()));
@@ -238,7 +238,7 @@ public class TicketService {
         statusLogRepository.save(log);
 
         notificationEventPublisher.publishTicketEvent(
-                NotificationType.TICKET_STATUS_CHANGED, ticket.getId(), actorUserId,
+                ENotificationType.TICKET_STATUS_CHANGED, ticket.getId(), actorUserId,
                 "สถานะ Ticket เปลี่ยน: " + ticket.getTitle(),
                 "สถานะเปลี่ยนจาก " + fromStatus.getName() + " เป็น " + toStatus.getName(),
                 Map.of(
@@ -272,7 +272,7 @@ public class TicketService {
     }
 
     private Statuses resolveStartStatus(UUID statusFlowId) {
-        return statusRepository.findFirstByFlowIdAndGroupOrderBySequenceAsc(statusFlowId, StatusGroup.START)
+        return statusRepository.findFirstByFlowIdAndGroupOrderBySequenceAsc(statusFlowId, EStatusGroup.START)
                 .orElseThrow(() -> new ResourceNotFoundException("ไม่พบสถานะเริ่มต้นสำหรับทีมรับเรื่องนี้"));
     }
 
@@ -306,7 +306,7 @@ public class TicketService {
 
             if (query.getResultType() != Long.class && query.getResultType() != long.class) {
                 Expression<Integer> successLast = cb.<Integer>selectCase()
-                        .when(cb.equal(root.get("currentStatus").get("group"), StatusGroup.SUCCESS), 1)
+                        .when(cb.equal(root.get("currentStatus").get("group"), EStatusGroup.SUCCESS), 1)
                         .otherwise(0);
                 query.orderBy(cb.asc(successLast), cb.asc(root.get("dueDate")));
             }
@@ -357,7 +357,7 @@ public class TicketService {
     }
 
     private String resolveRemainingTime(Ticket ticket) {
-        if (ticket.getCurrentStatus().getGroup() == StatusGroup.SUCCESS) {
+        if (ticket.getCurrentStatus().getGroup() == EStatusGroup.SUCCESS) {
             return RemainingTimeUtils.resolveClosed(ticket.getDueDate(), ticket.getUpdatedAt());
         }
         return RemainingTimeUtils.resolve(ticket.getDueDate());

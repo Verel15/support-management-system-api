@@ -4,7 +4,7 @@ import com.ticket.support_management_system_api.common.exception.DuplicateResour
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
 import com.ticket.support_management_system_api.common.enums.AccountType;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
-import com.ticket.support_management_system_api.features.notification.enums.NotificationType;
+import com.ticket.support_management_system_api.features.notification.enums.ENotificationType;
 import com.ticket.support_management_system_api.features.notification.service.NotificationEventPublisher;
 import java.util.Map;
 import com.ticket.support_management_system_api.common.response.PageResponse;
@@ -16,8 +16,8 @@ import com.ticket.support_management_system_api.features.project.dto.ProjectMemb
 import com.ticket.support_management_system_api.features.project.dto.ProjectRequest;
 import com.ticket.support_management_system_api.features.project.dto.ProjectResponse;
 import com.ticket.support_management_system_api.features.project.entities.Project;
-import com.ticket.support_management_system_api.features.project.enums.ProjectMemberRole;
-import com.ticket.support_management_system_api.features.project.enums.ProjectStatus;
+import com.ticket.support_management_system_api.features.project.enums.EProjectMemberRole;
+import com.ticket.support_management_system_api.features.project.enums.EProjectStatus;
 import com.ticket.support_management_system_api.features.project.repository.ProjectDocumentRepository;
 import com.ticket.support_management_system_api.features.project.repository.ProjectMemberRepository;
 import com.ticket.support_management_system_api.features.project.repository.ProjectRepository;
@@ -128,7 +128,7 @@ public class ProjectService {
         project.setEndDate(request.getEndDate());
         ProjectResponse response = toResponse(projectRepository.save(project));
         notificationEventPublisher.publishProjectEvent(
-                NotificationType.PROJECT_UPDATED, id, null,
+                ENotificationType.PROJECT_UPDATED, id, null,
                 "อัพเดตโปรเจค: " + project.getName(),
                 "ข้อมูลโปรเจคมีการเปลี่ยนแปลง",
                 Map.of("projectName", project.getName()));
@@ -147,20 +147,20 @@ public class ProjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("ไม่พบโปรเจค id: " + id));
     }
 
-    private ProjectStatus resolveStatus(Project project) {
+    private EProjectStatus resolveStatus(Project project) {
         LocalDate today = LocalDate.now();
         if (project.getStartDate().isAfter(today)) {
-            return ProjectStatus.WAITING;
+            return EProjectStatus.WAITING;
         }
         if (project.getEndDate().isBefore(today)) {
-            return ProjectStatus.CLOSED;
+            return EProjectStatus.CLOSED;
         }
-        return ProjectStatus.OPEN;
+        return EProjectStatus.OPEN;
     }
 
     private ProjectResponse toResponse(Project project) {
-        long customerCount = memberRepository.countByProjectIdAndRoleAndArchivedAtIsNull(project.getId(), ProjectMemberRole.CUSTOMER);
-        long assigneeCount = memberRepository.countByProjectIdAndRoleAndArchivedAtIsNull(project.getId(), ProjectMemberRole.ASSIGNEE);
+        long customerCount = memberRepository.countByProjectIdAndRoleAndArchivedAtIsNull(project.getId(), EProjectMemberRole.CUSTOMER);
+        long assigneeCount = memberRepository.countByProjectIdAndRoleAndArchivedAtIsNull(project.getId(), EProjectMemberRole.ASSIGNEE);
         long documentCount = documentRepository.countByProjectIdAndArchivedAtIsNull(project.getId());
 
         List<ProjectMemberSummaryResponse> members = memberRepository

@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import com.ticket.support_management_system_api.common.entity.BaseEntity;
-import com.ticket.support_management_system_api.features.user_type.enums.MyTicketAccess;
+import com.ticket.support_management_system_api.features.user_type.enums.EMyTicketAccess;
 
 @Entity
 @Table(name = "user_types")
@@ -20,7 +20,7 @@ public class UserType extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "my_ticket_access", nullable = false)
-    private MyTicketAccess myTicketAccess;
+    private EMyTicketAccess myTicketAccess;
 
     @Column(name = "all_project_access", nullable = false)
     private boolean allProjectAccess;

@@ -1,6 +1,6 @@
 package com.ticket.support_management_system_api.features.user_type.dto;
 
-import com.ticket.support_management_system_api.features.user_type.enums.MyTicketAccess;
+import com.ticket.support_management_system_api.features.user_type.enums.EMyTicketAccess;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,7 +15,7 @@ public class UserTypeRequest {
     private String name;
 
     @NotNull(message = "กรุณาเลือกสิทธิ์การเข้าถึง Tickets ของฉัน")
-    private MyTicketAccess myTicketAccess;
+    private EMyTicketAccess myTicketAccess;
 
     private boolean allProjectAccess;
     private boolean notificationAccess;

@@ -20,7 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ticket.support_management_system_api.features.status.enums.StatusGroup;
+import com.ticket.support_management_system_api.features.status.enums.EStatusGroup;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -93,25 +93,25 @@ public class StatusFlowService {
     private List<Statuses> buildAllStatuses(List<String> processNames, StatusFlows flow) {
         List<Statuses> statuses = new ArrayList<>();
 
-        statuses.add(buildStatus(flow, StatusGroup.START, "Open", 1, true));
+        statuses.add(buildStatus(flow, EStatusGroup.START, "Open", 1, true));
 
         int processSeq = 1;
-        statuses.add(buildStatus(flow, StatusGroup.PROCESS, "In Progress", processSeq++, true));
+        statuses.add(buildStatus(flow, EStatusGroup.PROCESS, "In Progress", processSeq++, true));
         if (processNames != null) {
             for (String name : processNames) {
-                statuses.add(buildStatus(flow, StatusGroup.PROCESS, name, processSeq++, false));
+                statuses.add(buildStatus(flow, EStatusGroup.PROCESS, name, processSeq++, false));
             }
         }
 
-        statuses.add(buildStatus(flow, StatusGroup.SUCCESS, "Done", 1, true));
-        statuses.add(buildStatus(flow, StatusGroup.SUCCESS, "Close", 2, true));
-        statuses.add(buildStatus(flow, StatusGroup.FAILED, "Reject", 1, true));
-        statuses.add(buildStatus(flow, StatusGroup.FAILED, "Return", 2, true));
+        statuses.add(buildStatus(flow, EStatusGroup.SUCCESS, "Done", 1, true));
+        statuses.add(buildStatus(flow, EStatusGroup.SUCCESS, "Close", 2, true));
+        statuses.add(buildStatus(flow, EStatusGroup.FAILED, "Reject", 1, true));
+        statuses.add(buildStatus(flow, EStatusGroup.FAILED, "Return", 2, true));
 
         return statuses;
     }
 
-    private Statuses buildStatus(StatusFlows flow, StatusGroup group, String name, int sequence, boolean isSystem) {
+    private Statuses buildStatus(StatusFlows flow, EStatusGroup group, String name, int sequence, boolean isSystem) {
         return Statuses.builder()
                 .flow(flow)
                 .group(group)

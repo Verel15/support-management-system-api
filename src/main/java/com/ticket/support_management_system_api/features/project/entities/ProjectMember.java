@@ -1,7 +1,7 @@
 package com.ticket.support_management_system_api.features.project.entities;
 
 import com.ticket.support_management_system_api.common.entity.BaseEntity;
-import com.ticket.support_management_system_api.features.project.enums.ProjectMemberRole;
+import com.ticket.support_management_system_api.features.project.enums.EProjectMemberRole;
 import com.ticket.support_management_system_api.features.user.entities.User;
 
 import jakarta.persistence.*;
@@ -27,5 +27,5 @@ public class ProjectMember extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ProjectMemberRole role;
+    private EProjectMemberRole role;
 }

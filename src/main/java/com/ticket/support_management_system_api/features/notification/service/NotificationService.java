@@ -8,7 +8,7 @@ import com.ticket.support_management_system_api.common.utils.PaginationUtils;
 import com.ticket.support_management_system_api.features.notification.dto.NotificationResponse;
 import com.ticket.support_management_system_api.features.notification.dto.UnreadCountResponse;
 import com.ticket.support_management_system_api.features.notification.entities.Notification;
-import com.ticket.support_management_system_api.features.notification.enums.NotificationType;
+import com.ticket.support_management_system_api.features.notification.enums.ENotificationType;
 import com.ticket.support_management_system_api.features.notification.repository.NotificationRepository;
 import com.ticket.support_management_system_api.features.user.entities.User;
 import com.ticket.support_management_system_api.features.user.repository.UserRepository;
@@ -33,7 +33,7 @@ public class NotificationService {
     private final NotificationSseService sseService;
     private final ObjectMapper objectMapper;
 
-    public Notification createNotification(UUID recipientId, UUID actorId, NotificationType type,
+    public Notification createNotification(UUID recipientId, UUID actorId, ENotificationType type,
                                            String entityType, UUID entityId, String title, String message,
                                            Map<String, Object> metadata) {
         User recipient = userRepository.findById(recipientId)

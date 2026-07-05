@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum NotificationCategory {
+public enum ENotificationCategory {
     TICKETS("Tickets ทั้งหมด"),
     MY_TICKETS("Tickets ของฉัน"),
     PROJECT("จัดการโครงการ");

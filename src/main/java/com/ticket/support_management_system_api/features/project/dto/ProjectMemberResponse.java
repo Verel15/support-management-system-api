@@ -1,6 +1,6 @@
 package com.ticket.support_management_system_api.features.project.dto;
 
-import com.ticket.support_management_system_api.features.project.enums.ProjectMemberRole;
+import com.ticket.support_management_system_api.features.project.enums.EProjectMemberRole;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -17,6 +17,6 @@ public class ProjectMemberResponse {
     private String lastName;
     private String email;
     private String profileImageUrl;
-    private ProjectMemberRole role;
+    private EProjectMemberRole role;
     private LocalDateTime createdAt;
 }

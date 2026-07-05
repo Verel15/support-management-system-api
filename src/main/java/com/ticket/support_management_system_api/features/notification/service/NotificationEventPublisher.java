@@ -1,6 +1,6 @@
 package com.ticket.support_management_system_api.features.notification.service;
 
-import com.ticket.support_management_system_api.features.notification.enums.NotificationType;
+import com.ticket.support_management_system_api.features.notification.enums.ENotificationType;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketAssigneeRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketRepository;
 import com.ticket.support_management_system_api.features.project.repository.ProjectMemberRepository;
@@ -31,7 +31,7 @@ public class NotificationEventPublisher {
 
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void publishTicketEvent(NotificationType type, UUID ticketId, UUID actorId,
+    public void publishTicketEvent(ENotificationType type, UUID ticketId, UUID actorId,
                                    String title, String message, Map<String, Object> metadata) {
         List<UUID> recipients = resolveTicketRecipients(ticketId, actorId);
         for (UUID recipientId : recipients) {
@@ -50,7 +50,7 @@ public class NotificationEventPublisher {
         List<UUID> recipients = resolveTicketRecipients(ticketId, actorId);
         for (UUID recipientId : recipients) {
             try {
-                notificationService.createNotification(recipientId, actorId, NotificationType.TICKET_COMMENT_ADDED,
+                notificationService.createNotification(recipientId, actorId, ENotificationType.TICKET_COMMENT_ADDED,
                         "TICKET", ticketId, title, message, metadata);
             } catch (Exception e) {
                 log.error("Failed to create notification for recipient {}: {}", recipientId, e.getMessage());
@@ -60,7 +60,7 @@ public class NotificationEventPublisher {
 
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void publishProjectEvent(NotificationType type, UUID projectId, UUID actorId,
+    public void publishProjectEvent(ENotificationType type, UUID projectId, UUID actorId,
                                     String title, String message, Map<String, Object> metadata) {
         List<UUID> recipients = resolveProjectRecipients(projectId, actorId);
         for (UUID recipientId : recipients) {

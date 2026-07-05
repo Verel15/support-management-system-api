@@ -1,6 +1,6 @@
 package com.ticket.support_management_system_api.features.ticket.dto;
 
-import com.ticket.support_management_system_api.features.ticket.enums.TicketCommentType;
+import com.ticket.support_management_system_api.features.ticket.enums.ETicketCommentType;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,6 +15,6 @@ public class TicketCommentResponse {
     private String authorFullName;
     private String authorProfileImageUrl;
     private String content;
-    private TicketCommentType commentType;
+    private ETicketCommentType commentType;
     private LocalDateTime createdAt;
 }

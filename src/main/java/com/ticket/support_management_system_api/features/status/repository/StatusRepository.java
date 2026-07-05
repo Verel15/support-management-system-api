@@ -3,7 +3,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import com.ticket.support_management_system_api.features.status.entities.Statuses;
-import com.ticket.support_management_system_api.features.status.enums.StatusGroup;
+import com.ticket.support_management_system_api.features.status.enums.EStatusGroup;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,7 +13,7 @@ public interface StatusRepository extends JpaRepository<Statuses, UUID> {
     List<Statuses> findByFlowId(UUID flowId);
     List<Statuses> findAllByArchivedAtIsNotNullOrderByNameAsc();
 
-    Optional<Statuses> findFirstByFlowIdAndGroupOrderBySequenceAsc(UUID flowId, StatusGroup group);
+    Optional<Statuses> findFirstByFlowIdAndGroupOrderBySequenceAsc(UUID flowId, EStatusGroup group);
 
     boolean existsByIdAndFlowId(UUID id, UUID flowId);
 

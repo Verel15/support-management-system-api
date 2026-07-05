@@ -1,7 +1,7 @@
 package com.ticket.support_management_system_api.features.notification.entities;
 
 import com.ticket.support_management_system_api.common.entity.BaseEntity;
-import com.ticket.support_management_system_api.features.notification.enums.NotificationType;
+import com.ticket.support_management_system_api.features.notification.enums.ENotificationType;
 import com.ticket.support_management_system_api.features.user.entities.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -32,7 +32,7 @@ public class Notification extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
-    private NotificationType type;
+    private ENotificationType type;
 
     @Column(name = "entity_type", nullable = false)
     private String entityType;

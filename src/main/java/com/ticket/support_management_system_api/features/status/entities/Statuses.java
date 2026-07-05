@@ -1,7 +1,7 @@
 package com.ticket.support_management_system_api.features.status.entities;
 
 import com.ticket.support_management_system_api.common.entity.BaseEntity;
-import com.ticket.support_management_system_api.features.status.enums.StatusGroup;
+import com.ticket.support_management_system_api.features.status.enums.EStatusGroup;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,7 +28,7 @@ public class Statuses extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "group_code", nullable = false)
-    private StatusGroup group;
+    private EStatusGroup group;
 
     @Column(nullable = false)
     private String name;

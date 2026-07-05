@@ -6,14 +6,14 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.ticket.support_management_system_api.features.user_type.enums.MyTicketAccess;
+import com.ticket.support_management_system_api.features.user_type.enums.EMyTicketAccess;
 
 @Data
 @Builder
 public class UserTypeResponse {
     private UUID id;
     private String name;
-    private MyTicketAccess myTicketAccess;
+    private EMyTicketAccess myTicketAccess;
     private boolean allProjectAccess;
     private boolean notificationAccess;
     private boolean dashboardAccess;

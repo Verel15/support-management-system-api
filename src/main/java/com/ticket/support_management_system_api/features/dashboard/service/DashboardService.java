@@ -3,7 +3,7 @@ package com.ticket.support_management_system_api.features.dashboard.service;
 import com.ticket.support_management_system_api.features.dashboard.dto.*;
 import com.ticket.support_management_system_api.features.dashboard.repository.DashboardRepository;
 import com.ticket.support_management_system_api.features.dashboard.repository.ProjectDashboardRepository;
-import com.ticket.support_management_system_api.features.status.enums.StatusGroup;
+import com.ticket.support_management_system_api.features.status.enums.EStatusGroup;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,16 +25,16 @@ public class DashboardService {
     public TicketStatusDistributionResponse getTicketStatusDistribution(int year, int month) {
         List<Object[]> rows = dashboardRepository.countTicketsByStatusGroupAndYearMonth(year, month);
 
-        Map<StatusGroup, Long> groupCounts = rows.stream()
+        Map<EStatusGroup, Long> groupCounts = rows.stream()
                 .collect(Collectors.toMap(
-                        r -> (StatusGroup) r[0],
+                        r -> (EStatusGroup) r[0],
                         r -> (Long) r[1]
                 ));
 
         long total = groupCounts.values().stream().mapToLong(v -> v).sum();
 
         List<TicketStatusDistributionResponse.StatusCount> statusCounts = new ArrayList<>();
-        for (StatusGroup group : StatusGroup.values()) {
+        for (EStatusGroup group : EStatusGroup.values()) {
             statusCounts.add(TicketStatusDistributionResponse.StatusCount.builder()
                     .group(group.name())
                     .count(groupCounts.getOrDefault(group, 0L))

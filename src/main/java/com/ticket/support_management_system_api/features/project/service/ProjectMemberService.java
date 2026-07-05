@@ -2,7 +2,7 @@ package com.ticket.support_management_system_api.features.project.service;
 
 import com.ticket.support_management_system_api.common.exception.DuplicateResourceException;
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
-import com.ticket.support_management_system_api.features.notification.enums.NotificationType;
+import com.ticket.support_management_system_api.features.notification.enums.ENotificationType;
 import com.ticket.support_management_system_api.features.notification.service.NotificationEventPublisher;
 import java.util.Map;
 import com.ticket.support_management_system_api.features.project.dto.ProjectMemberRequest;
@@ -60,7 +60,7 @@ public class ProjectMemberService {
                 .build();
         ProjectMemberResponse response = toResponse(memberRepository.save(member));
         notificationEventPublisher.publishProjectEvent(
-                NotificationType.PROJECT_MEMBER_ADDED, projectId, null,
+                ENotificationType.PROJECT_MEMBER_ADDED, projectId, null,
                 "สมาชิกใหม่ใน " + project.getName(),
                 user.getFirstName() + " " + user.getLastName() + " ถูกเพิ่มเข้าโปรเจค",
                 Map.of("projectName", project.getName(), "memberName", user.getFirstName() + " " + user.getLastName()));
@@ -77,7 +77,7 @@ public class ProjectMemberService {
         member.setArchivedAt(LocalDateTime.now());
         memberRepository.save(member);
         notificationEventPublisher.publishProjectEvent(
-                NotificationType.PROJECT_MEMBER_REMOVED, projectId, null,
+                ENotificationType.PROJECT_MEMBER_REMOVED, projectId, null,
                 "สมาชิกออกจาก " + member.getProject().getName(),
                 member.getUser().getFirstName() + " " + member.getUser().getLastName() + " ถูกนำออกจากโปรเจค",
                 Map.of("projectName", member.getProject().getName(),

@@ -2,7 +2,7 @@ package com.ticket.support_management_system_api.features.ticket.dto;
 
 import com.ticket.support_management_system_api.features.priority.enums.EPriorityColorKey;
 import com.ticket.support_management_system_api.features.priority.enums.EPriorityIconKey;
-import com.ticket.support_management_system_api.features.status.enums.StatusGroup;
+import com.ticket.support_management_system_api.features.status.enums.EStatusGroup;
 import lombok.Builder;
 import lombok.Data;
 
@@ -20,7 +20,7 @@ public class TicketListResponse {
     private String projectName;
     private UUID currentStatusId;
     private String currentStatusName;
-    private StatusGroup currentStatusGroup;
+    private EStatusGroup currentStatusGroup;
     private UUID statusFlowId;
     private String statusFlowName;
     private UUID priorityId;

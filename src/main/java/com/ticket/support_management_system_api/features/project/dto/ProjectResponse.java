@@ -1,6 +1,6 @@
 package com.ticket.support_management_system_api.features.project.dto;
 
-import com.ticket.support_management_system_api.features.project.enums.ProjectStatus;
+import com.ticket.support_management_system_api.features.project.enums.EProjectStatus;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -22,7 +22,7 @@ public class ProjectResponse {
 
     private LocalDate startDate;
     private LocalDate endDate;
-    private ProjectStatus status;
+    private EProjectStatus status;
 
     private long totalMembers;
     private long customerCount;

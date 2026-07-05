@@ -12,7 +12,7 @@ import com.ticket.support_management_system_api.features.auth.dto.TokenRefreshRe
 import com.ticket.support_management_system_api.features.auth.dto.TokenRefreshResponse;
 import com.ticket.support_management_system_api.features.auth.entities.DeviceSession;
 import com.ticket.support_management_system_api.features.auth.entities.RefreshToken;
-import com.ticket.support_management_system_api.features.auth.enums.AuditEvent;
+import com.ticket.support_management_system_api.features.auth.enums.EAuditEvent;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.auth.repository.RefreshTokenRepository;
 import com.ticket.support_management_system_api.features.user.repository.ExternalDetailsRepository;
@@ -54,7 +54,7 @@ public class AuthService {
         String ip = extractClientIp(httpRequest);
 
         if (!rateLimitService.tryConsumeLoginByIp(ip)) {
-            auditLogService.log(AuditEvent.LOGIN_FAILED, null, httpRequest, null,
+            auditLogService.log(EAuditEvent.LOGIN_FAILED, null, httpRequest, null,
                     Map.of("reason", "ip_rate_limit", "email", email));
             throw new TooManyRequestsException("พยายามเข้าสู่ระบบมากเกินไป กรุณาลองใหม่ภายหลัง");
         }
@@ -62,20 +62,20 @@ public class AuthService {
         User user = userRepository.findByEmail(email).orElse(null);
 
         if (user == null) {
-            auditLogService.log(AuditEvent.LOGIN_FAILED, null, httpRequest, null,
+            auditLogService.log(EAuditEvent.LOGIN_FAILED, null, httpRequest, null,
                     Map.of("reason", "user_not_found", "email", email));
             throw new AuthException("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
         }
 
         if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(LocalDateTime.now())) {
-            auditLogService.log(AuditEvent.LOGIN_FAILED, user.getId(), httpRequest, null,
+            auditLogService.log(EAuditEvent.LOGIN_FAILED, user.getId(), httpRequest, null,
                     Map.of("reason", "account_locked"));
             throw new AccountLockedException("บัญชีถูกล็อคชั่วคราว กรุณาลองใหม่ภายหลัง");
         }
 
         if (!rateLimitService.tryConsumeLoginByEmail(email)) {
             lockAccount(user, 30);
-            auditLogService.log(AuditEvent.ACCOUNT_LOCKED, user.getId(), httpRequest, null, Map.of());
+            auditLogService.log(EAuditEvent.ACCOUNT_LOCKED, user.getId(), httpRequest, null, Map.of());
             throw new AccountLockedException("บัญชีถูกล็อคชั่วคราวเนื่องจากพยายามเข้าสู่ระบบหลายครั้งเกินไป");
         }
 
@@ -83,7 +83,7 @@ public class AuthService {
             int attempts = user.getFailedLoginCount() + 1;
             user.setFailedLoginCount(attempts);
             userRepository.save(user);
-            auditLogService.log(AuditEvent.LOGIN_FAILED, user.getId(), httpRequest, null,
+            auditLogService.log(EAuditEvent.LOGIN_FAILED, user.getId(), httpRequest, null,
                     Map.of("reason", "wrong_password", "attempts", attempts));
             throw new AuthException("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
         }
@@ -103,7 +103,7 @@ public class AuthService {
         String accessToken = jwtService.generateAccessToken(user, userType);
         setRefreshTokenCookie(httpResponse, refreshTokenValue);
 
-        auditLogService.log(AuditEvent.LOGIN_SUCCESS, user.getId(), httpRequest, session.getId(), Map.of());
+        auditLogService.log(EAuditEvent.LOGIN_SUCCESS, user.getId(), httpRequest, session.getId(), Map.of());
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
@@ -133,7 +133,7 @@ public class AuthService {
 
         if (refreshToken.isRevoked()) {
             refreshTokenService.revokeAllForUser(refreshToken.getUser().getId());
-            auditLogService.log(AuditEvent.SUSPICIOUS_REUSE, refreshToken.getUser().getId(),
+            auditLogService.log(EAuditEvent.SUSPICIOUS_REUSE, refreshToken.getUser().getId(),
                     httpRequest, null, Map.of("tokenId", refreshToken.getId().toString()));
             throw new AuthException("ตรวจพบการใช้งานที่ผิดปกติ กรุณาเข้าสู่ระบบใหม่");
         }
@@ -157,7 +157,7 @@ public class AuthService {
         String newAccessToken = jwtService.generateAccessToken(user, userType);
         setRefreshTokenCookie(httpResponse, newRefreshTokenValue);
 
-        auditLogService.log(AuditEvent.TOKEN_REFRESH, user.getId(), httpRequest, session.getId(), Map.of());
+        auditLogService.log(EAuditEvent.TOKEN_REFRESH, user.getId(), httpRequest, session.getId(), Map.of());
 
         return TokenRefreshResponse.builder()
                 .accessToken(newAccessToken)
@@ -185,10 +185,10 @@ public class AuthService {
                     deviceSessionService.revoke(session.getId(), principal.userId());
                 }
 
-                auditLogService.log(AuditEvent.LOGOUT, principal.userId(), httpRequest, sessionId, Map.of());
+                auditLogService.log(EAuditEvent.LOGOUT, principal.userId(), httpRequest, sessionId, Map.of());
             });
         } else {
-            auditLogService.log(AuditEvent.LOGOUT, principal.userId(), httpRequest, null, Map.of());
+            auditLogService.log(EAuditEvent.LOGOUT, principal.userId(), httpRequest, null, Map.of());
         }
 
         clearRefreshTokenCookie(httpResponse);
@@ -198,7 +198,7 @@ public class AuthService {
     public void revokeSession(UUID sessionId, JwtPrincipal principal, HttpServletRequest httpRequest) {
         refreshTokenService.revokeAllForSession(sessionId);
         deviceSessionService.revoke(sessionId, principal.userId());
-        auditLogService.log(AuditEvent.SESSION_REVOKED, principal.userId(), httpRequest,
+        auditLogService.log(EAuditEvent.SESSION_REVOKED, principal.userId(), httpRequest,
                 sessionId, Map.of("sessionId", sessionId.toString()));
     }
 
@@ -212,7 +212,7 @@ public class AuthService {
             deviceSessionService.revokeAll(principal.userId());
         }
         clearRefreshTokenCookie(httpResponse);
-        auditLogService.log(AuditEvent.ALL_SESSIONS_REVOKED, principal.userId(), httpRequest, null, Map.of());
+        auditLogService.log(EAuditEvent.ALL_SESSIONS_REVOKED, principal.userId(), httpRequest, null, Map.of());
     }
 
     private UserType resolveUserType(User user) {

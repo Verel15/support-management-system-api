@@ -1,7 +1,7 @@
 package com.ticket.support_management_system_api.features.ticket.entities;
 
 import com.ticket.support_management_system_api.common.entity.BaseEntity;
-import com.ticket.support_management_system_api.features.ticket.enums.TicketCommentType;
+import com.ticket.support_management_system_api.features.ticket.enums.ETicketCommentType;
 import com.ticket.support_management_system_api.features.user.entities.User;
 
 import jakarta.persistence.*;
@@ -35,5 +35,5 @@ public class TicketComment extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "comment_type", nullable = false)
-    private TicketCommentType commentType;
+    private ETicketCommentType commentType;
 }
