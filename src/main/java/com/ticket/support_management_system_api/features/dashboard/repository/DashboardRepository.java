@@ -43,7 +43,7 @@ public interface DashboardRepository extends JpaRepository<Ticket, UUID> {
             JOIN t.currentStatus s
             WHERE t.archivedAt IS NULL
               AND YEAR(t.createdAt) = :year
-              AND s.group = com.ticket.support_management_system_api.features.status.enums.StatusGroup.START
+              AND s.group = com.ticket.support_management_system_api.features.status.enums.EStatusGroup.START
             """)
     Long countOpenTicketsByYear(@Param("year") int year);
 
@@ -57,8 +57,8 @@ public interface DashboardRepository extends JpaRepository<Ticket, UUID> {
               AND t.dueDate IS NOT NULL
               AND t.dueDate < CURRENT_TIMESTAMP
               AND s.group NOT IN (
-                  com.ticket.support_management_system_api.features.status.enums.StatusGroup.SUCCESS,
-                  com.ticket.support_management_system_api.features.status.enums.StatusGroup.FAILED
+                  com.ticket.support_management_system_api.features.status.enums.EStatusGroup.SUCCESS,
+                  com.ticket.support_management_system_api.features.status.enums.EStatusGroup.FAILED
               )
             """)
     Long countOverdueTicketsByYear(@Param("year") int year);
@@ -70,19 +70,19 @@ public interface DashboardRepository extends JpaRepository<Ticket, UUID> {
             JOIN t.currentStatus s
             WHERE t.archivedAt IS NULL
               AND YEAR(t.createdAt) = :year
-              AND s.group = com.ticket.support_management_system_api.features.status.enums.StatusGroup.SUCCESS
+              AND s.group = com.ticket.support_management_system_api.features.status.enums.EStatusGroup.SUCCESS
             """)
     Long countSuccessTicketsByYear(@Param("year") int year);
 
     // Monthly open/success/overdue ticket counts for line chart
     @Query("""
             SELECT MONTH(t.createdAt),
-                   SUM(CASE WHEN s.group = com.ticket.support_management_system_api.features.status.enums.StatusGroup.START THEN 1 ELSE 0 END),
-                   SUM(CASE WHEN s.group = com.ticket.support_management_system_api.features.status.enums.StatusGroup.SUCCESS THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN s.group = com.ticket.support_management_system_api.features.status.enums.EStatusGroup.START THEN 1 ELSE 0 END),
+                   SUM(CASE WHEN s.group = com.ticket.support_management_system_api.features.status.enums.EStatusGroup.SUCCESS THEN 1 ELSE 0 END),
                    SUM(CASE WHEN (t.dueDate IS NOT NULL AND t.dueDate < CURRENT_TIMESTAMP
                        AND s.group NOT IN (
-                           com.ticket.support_management_system_api.features.status.enums.StatusGroup.SUCCESS,
-                           com.ticket.support_management_system_api.features.status.enums.StatusGroup.FAILED
+                           com.ticket.support_management_system_api.features.status.enums.EStatusGroup.SUCCESS,
+                           com.ticket.support_management_system_api.features.status.enums.EStatusGroup.FAILED
                        )) THEN 1 ELSE 0 END)
             FROM Ticket t
             JOIN t.currentStatus s
@@ -96,12 +96,12 @@ public interface DashboardRepository extends JpaRepository<Ticket, UUID> {
     // Total open/success/overdue for the year (for legend totals in line chart)
     @Query("""
             SELECT
-                SUM(CASE WHEN s.group = com.ticket.support_management_system_api.features.status.enums.StatusGroup.START THEN 1 ELSE 0 END),
-                SUM(CASE WHEN s.group = com.ticket.support_management_system_api.features.status.enums.StatusGroup.SUCCESS THEN 1 ELSE 0 END),
+                SUM(CASE WHEN s.group = com.ticket.support_management_system_api.features.status.enums.EStatusGroup.START THEN 1 ELSE 0 END),
+                SUM(CASE WHEN s.group = com.ticket.support_management_system_api.features.status.enums.EStatusGroup.SUCCESS THEN 1 ELSE 0 END),
                 SUM(CASE WHEN (t.dueDate IS NOT NULL AND t.dueDate < CURRENT_TIMESTAMP
                     AND s.group NOT IN (
-                        com.ticket.support_management_system_api.features.status.enums.StatusGroup.SUCCESS,
-                        com.ticket.support_management_system_api.features.status.enums.StatusGroup.FAILED
+                        com.ticket.support_management_system_api.features.status.enums.EStatusGroup.SUCCESS,
+                        com.ticket.support_management_system_api.features.status.enums.EStatusGroup.FAILED
                     )) THEN 1 ELSE 0 END)
             FROM Ticket t
             JOIN t.currentStatus s
