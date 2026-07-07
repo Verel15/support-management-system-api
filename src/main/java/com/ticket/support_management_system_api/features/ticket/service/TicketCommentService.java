@@ -6,9 +6,12 @@ import com.ticket.support_management_system_api.features.ticket.dto.AddCommentRe
 import com.ticket.support_management_system_api.features.ticket.dto.TicketCommentResponse;
 import com.ticket.support_management_system_api.features.ticket.dto.TicketTimelineItem;
 import com.ticket.support_management_system_api.features.ticket.entities.Ticket;
+import com.ticket.support_management_system_api.features.ticket.entities.TicketAssigneeLog;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketComment;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketStatusLog;
+import com.ticket.support_management_system_api.features.ticket.enums.ETicketAssigneeAction;
 import com.ticket.support_management_system_api.features.ticket.enums.ETicketCommentType;
+import com.ticket.support_management_system_api.features.ticket.repository.TicketAssigneeLogRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketCommentRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketStatusLogRepository;
@@ -31,6 +34,7 @@ public class TicketCommentService {
 
     private final TicketCommentRepository commentRepository;
     private final TicketStatusLogRepository statusLogRepository;
+    private final TicketAssigneeLogRepository assigneeLogRepository;
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final NotificationEventPublisher notificationEventPublisher;
@@ -55,6 +59,9 @@ public class TicketCommentService {
 
         statusLogRepository.findAllByTicketId(ticketId)
                 .forEach(l -> items.add(toTimelineStatusLog(l)));
+
+        assigneeLogRepository.findAllByTicketId(ticketId)
+                .forEach(l -> items.add(toTimelineAssigneeLog(l)));
 
         items.sort(Comparator.comparing(TicketTimelineItem::getCreatedAt));
         return items;
@@ -131,6 +138,22 @@ public class TicketCommentService {
                 .toStatusId(log.getToStatus().getId())
                 .toStatusName(log.getToStatus().getName())
                 .note(log.getNote())
+                .build();
+    }
+
+    private TicketTimelineItem toTimelineAssigneeLog(TicketAssigneeLog log) {
+        User changedBy = log.getChangedBy();
+        User assigneeUser = log.getAssigneeUser();
+        return TicketTimelineItem.builder()
+                .id(log.getId())
+                .type(log.getAction() == ETicketAssigneeAction.ADDED
+                        ? ETicketCommentType.ASSIGNEE_ADDED : ETicketCommentType.ASSIGNEE_REMOVED)
+                .createdAt(log.getCreatedAt())
+                .authorId(changedBy.getId())
+                .authorFullName(changedBy.getFirstName() + " " + changedBy.getLastName())
+                .authorProfileImageUrl(changedBy.getProfileImageUrl())
+                .assigneeUserId(assigneeUser.getId())
+                .assigneeFullName(assigneeUser.getFirstName() + " " + assigneeUser.getLastName())
                 .build();
     }
 }

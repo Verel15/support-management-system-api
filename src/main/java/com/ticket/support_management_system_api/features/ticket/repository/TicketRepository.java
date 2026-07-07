@@ -6,7 +6,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,4 +23,15 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID>, JpaSpecif
     long countByProjectIdAndArchivedAtIsNull(UUID projectId);
 
     long countByProjectIdAndCurrentStatus_GroupAndArchivedAtIsNull(UUID projectId, EStatusGroup group);
+
+    @Query("""
+            SELECT t FROM Ticket t
+            WHERE t.archivedAt IS NULL
+              AND t.currentStatus.group NOT IN :closedGroups
+              AND t.dueDate IS NOT NULL
+              AND t.dueDate <= :threshold
+              AND t.rebalanceSuggestedAt IS NULL
+            """)
+    List<Ticket> findDueSoonUnnotified(@Param("closedGroups") List<EStatusGroup> closedGroups,
+                                        @Param("threshold") LocalDateTime threshold);
 }

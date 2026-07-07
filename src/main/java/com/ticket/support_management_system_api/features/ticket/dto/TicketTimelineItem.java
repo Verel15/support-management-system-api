@@ -26,4 +26,7 @@ public class TicketTimelineItem {
     private UUID toStatusId;
     private String toStatusName;
     private String note;
+
+    private UUID assigneeUserId;
+    private String assigneeFullName;
 }

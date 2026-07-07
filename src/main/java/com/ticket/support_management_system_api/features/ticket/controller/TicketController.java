@@ -6,6 +6,7 @@ import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
 import com.ticket.support_management_system_api.features.ticket.dto.*;
+import com.ticket.support_management_system_api.features.ticket.service.RebalanceSuggestionService;
 import com.ticket.support_management_system_api.features.ticket.service.TicketService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -25,6 +26,7 @@ import java.util.UUID;
 public class TicketController {
 
     private final TicketService ticketService;
+    private final RebalanceSuggestionService rebalanceSuggestionService;
     private final ReauthenticationService reauthenticationService;
 
     @GetMapping
@@ -83,6 +85,16 @@ public class TicketController {
         reauthenticationService.verifyPassword(user.userId(), body.getPassword(), request);
         ticketService.delete(id, user.userId());
         return ResponseEntity.ok(ApiResponse.success("ลบ Ticket สำเร็จ", null));
+    }
+
+    @GetMapping("/{id}/suggested-assignee")
+    public ResponseEntity<ApiResponse<SuggestedAssigneeResponse>> suggestedAssignee(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(ticketService.getSuggestedAssignee(id)));
+    }
+
+    @GetMapping("/{id}/rebalance-suggestion")
+    public ResponseEntity<ApiResponse<RebalanceSuggestionResponse>> rebalanceSuggestion(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(rebalanceSuggestionService.getSuggestion(id)));
     }
 
     @PostMapping("/{id}/status")

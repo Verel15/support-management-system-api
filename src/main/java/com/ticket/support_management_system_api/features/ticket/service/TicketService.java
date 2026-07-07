@@ -12,6 +12,9 @@ import com.ticket.support_management_system_api.common.utils.RemainingTimeUtils;
 import com.ticket.support_management_system_api.features.priority.entities.PriorityLevels;
 import com.ticket.support_management_system_api.features.priority.enums.EIntervalUnit;
 import com.ticket.support_management_system_api.features.project.entities.Project;
+import com.ticket.support_management_system_api.features.project.entities.ProjectMember;
+import com.ticket.support_management_system_api.features.project.enums.EProjectMemberRole;
+import com.ticket.support_management_system_api.features.project.repository.ProjectMemberRepository;
 import com.ticket.support_management_system_api.features.project.repository.ProjectRepository;
 import com.ticket.support_management_system_api.features.status.entities.StatusFlows;
 import com.ticket.support_management_system_api.features.status.entities.Statuses;
@@ -20,15 +23,21 @@ import com.ticket.support_management_system_api.features.status.repository.Statu
 import com.ticket.support_management_system_api.features.ticket.dto.*;
 import com.ticket.support_management_system_api.features.ticket.entities.Ticket;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketAssignee;
+import com.ticket.support_management_system_api.features.ticket.entities.TicketAssigneeLog;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketStatusLog;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketYearCounter;
+import com.ticket.support_management_system_api.features.ticket.enums.ESuggestedAssigneeReason;
+import com.ticket.support_management_system_api.features.ticket.enums.ETicketAssigneeAction;
+import com.ticket.support_management_system_api.features.ticket.repository.TicketAssigneeLogRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketAssigneeRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketStatusLogRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketYearCounterRepository;
 import com.ticket.support_management_system_api.features.ticket_sub_category.entities.TicketSubCategory;
 import com.ticket.support_management_system_api.features.ticket_sub_category.repository.TicketSubCategoryRepository;
+import com.ticket.support_management_system_api.features.user.entities.ExternalDetails;
 import com.ticket.support_management_system_api.features.user.entities.User;
+import com.ticket.support_management_system_api.features.user.repository.ExternalDetailsRepository;
 import com.ticket.support_management_system_api.features.user.repository.UserRepository;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
@@ -41,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -60,6 +70,11 @@ public class TicketService {
     private final TicketStatusLogRepository statusLogRepository;
     private final TicketYearCounterRepository yearCounterRepository;
     private final NotificationEventPublisher notificationEventPublisher;
+    private final ProjectMemberRepository projectMemberRepository;
+    private final ExternalDetailsRepository externalDetailsRepository;
+    private final TicketAssigneeLogRepository ticketAssigneeLogRepository;
+
+    private static final List<EStatusGroup> CLOSED_STATUS_GROUPS = List.of(EStatusGroup.SUCCESS, EStatusGroup.FAILED);
 
     @Transactional(readOnly = true)
     public PageResponse<TicketListResponse> findAll(TicketFilterRequest filter, Pageable pageable) {
@@ -86,6 +101,73 @@ public class TicketService {
         }
         List<TicketAssignee> assignees = ticketAssigneeRepository.findAllByTicketIdAndArchivedAtIsNull(id);
         return toDetailResponse(ticket, assignees);
+    }
+
+    @Transactional(readOnly = true)
+    public SuggestedAssigneeResponse getSuggestedAssignee(UUID ticketId) {
+        Ticket ticket = getOrThrow(ticketId);
+        BestAssigneeResult result = findBestAssignee(ticket.getProject().getId(), ticket.getSubCategory().getPosition().getId());
+        if (result.reason() != null) {
+            return SuggestedAssigneeResponse.builder().suggested(null).reason(result.reason()).build();
+        }
+
+        User bestUser = result.member().getUser();
+        ExternalDetails bestDetails = result.detailsByUserId().get(bestUser.getId());
+        SuggestedAssigneeUser suggested = SuggestedAssigneeUser.builder()
+                .userId(bestUser.getId())
+                .fullName(bestUser.getFirstName() + " " + bestUser.getLastName())
+                .profileImageUrl(bestUser.getProfileImageUrl())
+                .positionName(bestDetails.getPosition().getName())
+                .openTicketCount(result.openTicketCount())
+                .build();
+
+        return SuggestedAssigneeResponse.builder()
+                .suggested(suggested)
+                .reason(null)
+                .build();
+    }
+
+    private record BestAssigneeResult(ProjectMember member, long openTicketCount,
+                                       Map<UUID, ExternalDetails> detailsByUserId, ESuggestedAssigneeReason reason) {
+        static BestAssigneeResult empty(ESuggestedAssigneeReason reason) {
+            return new BestAssigneeResult(null, 0, Map.of(), reason);
+        }
+    }
+
+    private BestAssigneeResult findBestAssignee(UUID projectId, UUID positionId) {
+        List<ProjectMember> assigneeMembers = projectMemberRepository
+                .findAllByProjectIdAndRoleAndArchivedAtIsNull(projectId, EProjectMemberRole.ASSIGNEE);
+        if (assigneeMembers.isEmpty()) {
+            return BestAssigneeResult.empty(ESuggestedAssigneeReason.NO_PROJECT_MEMBERS);
+        }
+
+        List<UUID> candidateUserIds = assigneeMembers.stream().map(m -> m.getUser().getId()).toList();
+        Map<UUID, ExternalDetails> detailsByUserId = externalDetailsRepository.findAllByUserIdIn(candidateUserIds)
+                .stream()
+                .collect(Collectors.toMap(d -> d.getUser().getId(), d -> d));
+
+        List<ProjectMember> matchingMembers = assigneeMembers.stream()
+                .filter(m -> {
+                    ExternalDetails details = detailsByUserId.get(m.getUser().getId());
+                    return details != null && details.getPosition() != null
+                            && details.getPosition().getId().equals(positionId);
+                })
+                .toList();
+        if (matchingMembers.isEmpty()) {
+            return BestAssigneeResult.empty(ESuggestedAssigneeReason.NO_POSITION_MATCH);
+        }
+
+        List<UUID> matchingUserIds = matchingMembers.stream().map(m -> m.getUser().getId()).toList();
+        Map<UUID, Long> openCountByUserId = ticketAssigneeRepository
+                .countOpenTicketsByUserIds(matchingUserIds, CLOSED_STATUS_GROUPS)
+                .stream()
+                .collect(Collectors.toMap(row -> (UUID) row[0], row -> (Long) row[1]));
+
+        ProjectMember best = matchingMembers.stream()
+                .min(Comparator.comparingLong(m -> openCountByUserId.getOrDefault(m.getUser().getId(), 0L)))
+                .orElseThrow();
+
+        return new BestAssigneeResult(best, openCountByUserId.getOrDefault(best.getUser().getId(), 0L), detailsByUserId, null);
     }
 
     private PageResponse<TicketListResponse> queryTickets(Specification<Ticket> spec, Pageable pageable) {
@@ -149,7 +231,35 @@ public class TicketService {
                 actor.getFirstName() + " " + actor.getLastName() + " สร้าง Ticket ใหม่",
                 Map.of("ticketTitle", ticket.getTitle()));
 
-        return toDetailResponse(ticket, List.of());
+        List<TicketAssignee> assignees = autoAssign(ticket, actor);
+
+        return toDetailResponse(ticket, assignees);
+    }
+
+    private List<TicketAssignee> autoAssign(Ticket ticket, User actor) {
+        BestAssigneeResult result = findBestAssignee(ticket.getProject().getId(), ticket.getSubCategory().getPosition().getId());
+        if (result.reason() != null) {
+            return List.of();
+        }
+
+        User assigneeUser = result.member().getUser();
+        TicketAssignee assignee = ticketAssigneeRepository.save(
+                TicketAssignee.builder().ticket(ticket).user(assigneeUser).build());
+
+        ticketAssigneeLogRepository.save(TicketAssigneeLog.builder()
+                .ticket(ticket)
+                .changedBy(actor)
+                .assigneeUser(assigneeUser)
+                .action(ETicketAssigneeAction.ADDED)
+                .build());
+
+        notificationEventPublisher.publishTicketEvent(
+                ENotificationType.TICKET_ASSIGNED, ticket.getId(), null,
+                "มอบหมาย Ticket ให้ " + assigneeUser.getFirstName() + " " + assigneeUser.getLastName(),
+                assigneeUser.getFirstName() + " " + assigneeUser.getLastName() + " ถูกมอบหมายให้รับผิดชอบ Ticket โดยระบบอัตโนมัติ",
+                Map.of("assigneeName", assigneeUser.getFirstName() + " " + assigneeUser.getLastName()));
+
+        return List.of(assignee);
     }
 
     public TicketDetailResponse update(UUID id, UpdateTicketRequest request, UUID actorUserId) {

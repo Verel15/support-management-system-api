@@ -8,6 +8,9 @@ import com.ticket.support_management_system_api.features.ticket.dto.AddAssigneeR
 import com.ticket.support_management_system_api.features.ticket.dto.TicketAssigneeResponse;
 import com.ticket.support_management_system_api.features.ticket.entities.Ticket;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketAssignee;
+import com.ticket.support_management_system_api.features.ticket.entities.TicketAssigneeLog;
+import com.ticket.support_management_system_api.features.ticket.enums.ETicketAssigneeAction;
+import com.ticket.support_management_system_api.features.ticket.repository.TicketAssigneeLogRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketAssigneeRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketRepository;
 import com.ticket.support_management_system_api.features.user.entities.User;
@@ -30,6 +33,7 @@ public class TicketAssigneeService {
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final NotificationEventPublisher notificationEventPublisher;
+    private final TicketAssigneeLogRepository assigneeLogRepository;
 
     @Transactional(readOnly = true)
     public List<TicketAssigneeResponse> findAllByTicket(UUID ticketId) {
@@ -40,10 +44,12 @@ public class TicketAssigneeService {
                 .toList();
     }
 
-    public TicketAssigneeResponse addAssignee(UUID ticketId, AddAssigneeRequest request) {
+    public TicketAssigneeResponse addAssignee(UUID ticketId, AddAssigneeRequest request, UUID actorUserId) {
         Ticket ticket = getTicketOrThrow(ticketId);
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("ไม่พบผู้ใช้ id: " + request.getUserId()));
+        User actor = userRepository.findById(actorUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("ไม่พบผู้ใช้ id: " + actorUserId));
 
         TicketAssignee assignee = assigneeRepository.findByTicketIdAndUserId(ticketId, request.getUserId())
                 .map(existing -> {
@@ -57,6 +63,17 @@ public class TicketAssigneeService {
                 .orElseGet(() -> TicketAssignee.builder().ticket(ticket).user(user).build());
 
         TicketAssigneeResponse response = toResponse(assigneeRepository.save(assignee));
+
+        ticket.setRebalanceSuggestedAt(null);
+        ticketRepository.save(ticket);
+
+        assigneeLogRepository.save(TicketAssigneeLog.builder()
+                .ticket(ticket)
+                .changedBy(actor)
+                .assigneeUser(user)
+                .action(ETicketAssigneeAction.ADDED)
+                .build());
+
         notificationEventPublisher.publishTicketEvent(
                 ENotificationType.TICKET_ASSIGNED, ticketId, null,
                 "มอบหมาย Ticket ให้ " + user.getFirstName() + " " + user.getLastName(),
@@ -66,12 +83,22 @@ public class TicketAssigneeService {
     }
 
     public void removeAssignee(UUID ticketId, UUID userId, UUID actorUserId) {
-        getTicketOrThrow(ticketId);
+        Ticket ticket = getTicketOrThrow(ticketId);
         TicketAssignee assignee = assigneeRepository.findByTicketIdAndUserIdAndArchivedAtIsNull(ticketId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("ไม่พบผู้รับผิดชอบนี้ใน Ticket"));
+        User actor = userRepository.findById(actorUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("ไม่พบผู้ใช้ id: " + actorUserId));
         assignee.setArchivedAt(LocalDateTime.now());
         assignee.setArchivedBy(actorUserId);
         assigneeRepository.save(assignee);
+
+        assigneeLogRepository.save(TicketAssigneeLog.builder()
+                .ticket(ticket)
+                .changedBy(actor)
+                .assigneeUser(assignee.getUser())
+                .action(ETicketAssigneeAction.REMOVED)
+                .build());
+
         notificationEventPublisher.publishTicketEvent(
                 ENotificationType.TICKET_UNASSIGNED, ticketId, actorUserId,
                 "ยกเลิกการมอบหมาย Ticket",

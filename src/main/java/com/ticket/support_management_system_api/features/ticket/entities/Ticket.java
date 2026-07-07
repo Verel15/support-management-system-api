@@ -65,6 +65,9 @@ public class Ticket extends BaseEntity {
     @Column(name = "due_date")
     private LocalDateTime dueDate;
 
+    @Column(name = "rebalance_suggested_at")
+    private LocalDateTime rebalanceSuggestedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requester_id", nullable = false)
     private User requester;

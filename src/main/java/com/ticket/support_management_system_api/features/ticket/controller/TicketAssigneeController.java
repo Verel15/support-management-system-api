@@ -37,7 +37,7 @@ public class TicketAssigneeController {
             @Valid @RequestBody AddAssigneeRequest request,
             @AuthenticationPrincipal JwtPrincipal user) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("เพิ่มผู้รับผิดชอบสำเร็จ", assigneeService.addAssignee(ticketId, request)));
+                .body(ApiResponse.success("เพิ่มผู้รับผิดชอบสำเร็จ", assigneeService.addAssignee(ticketId, request, user.userId())));
     }
 
     @DeleteMapping("/{userId}")

@@ -12,6 +12,7 @@ public enum ENotificationType {
     TICKET_STATUS_CHANGED(ENotificationCategory.TICKETS),
     TICKET_ASSIGNED(ENotificationCategory.MY_TICKETS),
     TICKET_UNASSIGNED(ENotificationCategory.MY_TICKETS),
+    TICKET_REBALANCE_SUGGESTED(ENotificationCategory.MY_TICKETS),
     TICKET_COMMENT_ADDED(ENotificationCategory.MY_TICKETS),
     PROJECT_MEMBER_ADDED(ENotificationCategory.PROJECT),
     PROJECT_MEMBER_REMOVED(ENotificationCategory.PROJECT),

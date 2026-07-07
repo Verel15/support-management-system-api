@@ -184,6 +184,34 @@ src/main/java/com/ticket/support_management_system_api/
 
 ---
 
+## Auto-Assign & Rebalance Suggestion
+
+### 1. Auto-assign ตอนสร้าง Ticket
+
+เมื่อสร้าง Ticket ใหม่ (`POST /api/v1/tickets`) ระบบจะเลือกผู้รับผิดชอบให้อัตโนมัติ โดยไม่ต้องให้ผู้ใช้เลือกเอง:
+
+1. หา `ProjectMember` ที่มี role `ASSIGNEE` ในโครงการเดียวกับ Ticket
+2. กรองเฉพาะคนที่ตำแหน่ง (`ExternalDetails.position`) ตรงกับตำแหน่งของ Sub Category
+3. ในกลุ่มที่ตำแหน่งตรงกัน เลือกคนที่มี Ticket ที่ยังไม่ปิด (`currentStatus.group` ไม่ใช่ `SUCCESS`/`FAILED`) **น้อยที่สุด**
+4. บันทึกเป็น `TicketAssignee` + log ใน `TicketAssigneeLog` (action `ADDED`) + แจ้งเตือน `TICKET_ASSIGNED`
+
+ถ้าไม่มีสมาชิกในโครงการ หรือไม่มีใครตำแหน่งตรงกัน ระบบจะไม่ auto-assign ให้ (Ticket จะไม่มีผู้รับผิดชอบ ต้องมอบหมายเอง) — logic นี้ยังใช้ร่วมกับ endpoint เดิม `GET /tickets/{id}/suggested-assignee`
+
+### 2. Rebalance Suggestion (แนะนำโอนงาน)
+
+เมื่อ Ticket ใกล้ครบกำหนด (เหลือเวลา ≤ 30 นาที) และยังไม่ปิด ระบบจะเช็คว่าผู้รับผิดชอบปัจจุบัน **assign เกินภาระ** หรือไม่ เทียบกับค่าเฉลี่ยของเพื่อนร่วมตำแหน่งเดียวกันในโครงการเดียวกัน (`openCount(user) > average(openCount ของสมาชิก ASSIGNEE ตำแหน่งเดียวกัน)`) ถ้าเกิน จะแนะนำให้โอนงานไปยังคนที่มี Ticket ค้างน้อยที่สุดในกลุ่มเดียวกัน
+
+- **Background job** (`RebalanceSuggestionService.notifyOverloadedAssigneesForDueSoonTickets`, ทุก 1 นาที): สแกน Ticket ที่ใกล้ครบกำหนดและยังไม่เคยแจ้ง (`Ticket.rebalanceSuggestedAt IS NULL`) ประเมินแล้วส่ง notification ประเภท `TICKET_REBALANCE_SUGGESTED` ให้เฉพาะผู้รับผิดชอบที่เกินภาระ (ไม่ broadcast ทั้ง ticket) จากนั้น mark `rebalanceSuggestedAt` กันแจ้งซ้ำ
+- **On-demand endpoint** `GET /api/v1/tickets/{id}/rebalance-suggestion`: ให้หน้า Ticket Detail เรียกดูสดๆ เพื่อแสดง suggest banner (คำนวณสดทุกครั้ง ไม่ผูกกับ flag)
+- `rebalanceSuggestedAt` จะถูก reset เป็น `null` ทุกครั้งที่มีการเพิ่ม/ลบผู้รับผิดชอบ Ticket เพื่อให้ระบบเช็คใหม่ได้ถ้าเกิด overload อีกครั้งหลังเปลี่ยนตัว
+
+> **หมายเหตุ DB migration**: โปรเจกต์นี้ใช้ `ddl-auto: validate` (ไม่มี Flyway/Liquibase) เพิ่มคอลัมน์ `rebalance_suggested_at` ใน entity `Ticket` แล้ว ต้องรัน SQL นี้กับฐานข้อมูลจริงก่อน deploy:
+> ```sql
+> ALTER TABLE tickets ADD COLUMN rebalance_suggested_at TIMESTAMP;
+> ```
+
+---
+
 ## Production Example
 
 ```bash

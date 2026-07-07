@@ -1,5 +1,6 @@
 package com.ticket.support_management_system_api.features.ticket.repository;
 
+import com.ticket.support_management_system_api.features.status.enums.EStatusGroup;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketAssignee;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -22,4 +23,16 @@ public interface TicketAssigneeRepository extends JpaRepository<TicketAssignee, 
     Optional<TicketAssignee> findByTicketIdAndUserId(UUID ticketId, UUID userId);
 
     boolean existsByTicketIdAndUserIdAndArchivedAtIsNull(UUID ticketId, UUID userId);
+
+    @Query("""
+            SELECT a.user.id, COUNT(a)
+            FROM TicketAssignee a
+            WHERE a.user.id IN :userIds
+              AND a.archivedAt IS NULL
+              AND a.ticket.archivedAt IS NULL
+              AND a.ticket.currentStatus.group NOT IN :closedGroups
+            GROUP BY a.user.id
+            """)
+    List<Object[]> countOpenTicketsByUserIds(@Param("userIds") List<UUID> userIds,
+                                              @Param("closedGroups") List<EStatusGroup> closedGroups);
 }

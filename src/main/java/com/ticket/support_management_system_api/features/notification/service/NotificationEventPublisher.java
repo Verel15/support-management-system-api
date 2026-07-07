@@ -45,6 +45,17 @@ public class NotificationEventPublisher {
 
     @Async
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void publishDirectEvent(ENotificationType type, UUID recipientId, UUID relatedId,
+                                   String title, String message, Map<String, Object> metadata) {
+        try {
+            notificationService.createNotification(recipientId, null, type, "TICKET", relatedId, title, message, metadata);
+        } catch (Exception e) {
+            log.error("Failed to create notification for recipient {}: {}", recipientId, e.getMessage());
+        }
+    }
+
+    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void publishCommentEvent(UUID ticketId, UUID actorId, String title, String message,
                                     Map<String, Object> metadata) {
         List<UUID> recipients = resolveTicketRecipients(ticketId, actorId);
