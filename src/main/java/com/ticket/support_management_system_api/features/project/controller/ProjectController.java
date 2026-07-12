@@ -8,7 +8,10 @@ import com.ticket.support_management_system_api.features.auth.service.Reauthenti
 import com.ticket.support_management_system_api.features.project.dto.ProjectFilterRequest;
 import com.ticket.support_management_system_api.features.project.dto.ProjectRequest;
 import com.ticket.support_management_system_api.features.project.dto.ProjectResponse;
+import com.ticket.support_management_system_api.features.project.dto.ProjectTicketStatsResponse;
 import com.ticket.support_management_system_api.features.project.service.ProjectService;
+import com.ticket.support_management_system_api.features.ticket.dto.TicketFilterRequest;
+import com.ticket.support_management_system_api.features.ticket.dto.TicketListResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +41,19 @@ public class ProjectController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ProjectResponse>> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(projectService.findById(id)));
+    }
+
+    @GetMapping("/{id}/ticket-stats")
+    public ResponseEntity<ApiResponse<ProjectTicketStatsResponse>> getTicketStats(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(projectService.getTicketStats(id)));
+    }
+
+    @GetMapping("/{id}/tickets")
+    public ResponseEntity<ApiResponse<PageResponse<TicketListResponse>>> findTicketsByProjectId(
+            @PathVariable UUID id,
+            @ModelAttribute TicketFilterRequest filter,
+            Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success(projectService.findTicketsByProjectId(id, filter, pageable)));
     }
 
     @GetMapping("/my")

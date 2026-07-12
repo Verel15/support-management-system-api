@@ -15,6 +15,7 @@ import com.ticket.support_management_system_api.features.project.dto.ProjectFilt
 import com.ticket.support_management_system_api.features.project.dto.ProjectMemberSummaryResponse;
 import com.ticket.support_management_system_api.features.project.dto.ProjectRequest;
 import com.ticket.support_management_system_api.features.project.dto.ProjectResponse;
+import com.ticket.support_management_system_api.features.project.dto.ProjectTicketStatsResponse;
 import com.ticket.support_management_system_api.features.project.entities.Project;
 import com.ticket.support_management_system_api.features.project.enums.EProjectMemberRole;
 import com.ticket.support_management_system_api.features.project.enums.EProjectStatus;
@@ -23,7 +24,10 @@ import com.ticket.support_management_system_api.features.project.repository.Proj
 import com.ticket.support_management_system_api.features.project.repository.ProjectRepository;
 import com.ticket.support_management_system_api.features.project.repository.ProjectSpecification;
 import com.ticket.support_management_system_api.features.status.enums.EStatusGroup;
+import com.ticket.support_management_system_api.features.ticket.dto.TicketFilterRequest;
+import com.ticket.support_management_system_api.features.ticket.dto.TicketListResponse;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketRepository;
+import com.ticket.support_management_system_api.features.ticket.service.TicketService;
 import com.ticket.support_management_system_api.features.user.repository.CustomerDetailsRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -51,6 +56,7 @@ public class ProjectService {
     private final CustomerDetailsRepository customerDetailsRepository;
     private final NotificationEventPublisher notificationEventPublisher;
     private final TicketRepository ticketRepository;
+    private final TicketService ticketService;
 
     @Transactional(readOnly = true)
     public PageResponse<ProjectResponse> findAll(ProjectFilterRequest filter, Pageable pageable) {
@@ -61,6 +67,52 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public ProjectResponse findById(UUID id) {
         return toResponse(getOrThrow(id));
+    }
+
+    @Transactional(readOnly = true)
+    public ProjectTicketStatsResponse getTicketStats(UUID id) {
+        getOrThrow(id);
+
+        Map<EStatusGroup, Long> counts = new EnumMap<>(EStatusGroup.class);
+        for (EStatusGroup group : EStatusGroup.values()) {
+            counts.put(group, 0L);
+        }
+        for (TicketRepository.TicketStatusGroupCount row : ticketRepository.countByProjectIdGroupByStatusGroup(id)) {
+            counts.put(row.getStatusGroup(), row.getTicketCount());
+        }
+
+        long total = counts.values().stream().mapToLong(Long::longValue).sum();
+
+        List<ProjectTicketStatsResponse.StatusGroupCount> statusGroups = counts.entrySet().stream()
+                .map(e -> ProjectTicketStatsResponse.StatusGroupCount.builder()
+                        .statusGroup(e.getKey().name())
+                        .count(e.getValue())
+                        .build())
+                .toList();
+
+        return ProjectTicketStatsResponse.builder()
+                .projectId(id)
+                .totalTickets(total)
+                .statusGroups(statusGroups)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<TicketListResponse> findTicketsByProjectId(UUID id, TicketFilterRequest filter, Pageable pageable) {
+        getOrThrow(id);
+        filter.setProjectId(id);
+        return ticketService.findAll(filter, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProjectResponse> findByCompanyId(UUID companyId) {
+        if (!companyRepository.existsById(companyId)) {
+            throw new ResourceNotFoundException("ไม่พบข้อมูลบริษัท id: " + companyId);
+        }
+        return projectRepository.findAllByCompanyIdAndArchivedAtIsNullOrderByCreatedAtDesc(companyId)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     @Transactional(readOnly = true)

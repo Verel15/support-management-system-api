@@ -25,6 +25,19 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID>, JpaSpecif
     long countByProjectIdAndCurrentStatus_GroupAndArchivedAtIsNull(UUID projectId, EStatusGroup group);
 
     @Query("""
+            SELECT t.currentStatus.group AS statusGroup, COUNT(t) AS ticketCount
+            FROM Ticket t
+            WHERE t.project.id = :projectId AND t.archivedAt IS NULL
+            GROUP BY t.currentStatus.group
+            """)
+    List<TicketStatusGroupCount> countByProjectIdGroupByStatusGroup(@Param("projectId") UUID projectId);
+
+    interface TicketStatusGroupCount {
+        EStatusGroup getStatusGroup();
+        long getTicketCount();
+    }
+
+    @Query("""
             SELECT t FROM Ticket t
             WHERE t.archivedAt IS NULL
               AND t.currentStatus.group NOT IN :closedGroups

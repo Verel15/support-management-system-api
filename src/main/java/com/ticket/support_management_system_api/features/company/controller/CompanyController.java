@@ -2,15 +2,20 @@ package com.ticket.support_management_system_api.features.company.controller;
 
 import com.ticket.support_management_system_api.common.dto.DeleteConfirmationRequest;
 import com.ticket.support_management_system_api.common.response.ApiResponse;
+import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.auth.service.ReauthenticationService;
 import com.ticket.support_management_system_api.features.company.dto.CompanyRequest;
 import com.ticket.support_management_system_api.features.company.dto.CompanyResponse;
 import com.ticket.support_management_system_api.features.company.service.CompanyService;
+import com.ticket.support_management_system_api.features.project.dto.ProjectResponse;
+import com.ticket.support_management_system_api.features.project.service.ProjectService;
+import com.ticket.support_management_system_api.features.user.dto.UserResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,6 +30,7 @@ import java.util.UUID;
 public class CompanyController {
 
     private final CompanyService companyService;
+    private final ProjectService projectService;
     private final ReauthenticationService reauthenticationService;
 
     @GetMapping
@@ -37,6 +43,19 @@ public class CompanyController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<CompanyResponse>> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(companyService.findById(id)));
+    }
+
+    @GetMapping("/{id}/users")
+    public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> findUsersByCompanyId(
+            @PathVariable UUID id,
+            @RequestParam(required = false) String keyword,
+            Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success(companyService.findUsersByCompanyId(id, keyword, pageable)));
+    }
+
+    @GetMapping("/{id}/projects")
+    public ResponseEntity<ApiResponse<List<ProjectResponse>>> findProjectsByCompanyId(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.success(projectService.findByCompanyId(id)));
     }
 
     @PostMapping

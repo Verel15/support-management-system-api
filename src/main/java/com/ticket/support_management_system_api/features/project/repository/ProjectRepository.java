@@ -16,6 +16,7 @@ public interface ProjectRepository extends JpaRepository<Project, UUID>, JpaSpec
     boolean existsByNameAndArchivedAtIsNullAndIdNot(String name, UUID id);
 
     long countByCompanyIdAndArchivedAtIsNull(UUID companyId);
+    List<Project> findAllByCompanyIdAndArchivedAtIsNullOrderByCreatedAtDesc(UUID companyId);
 
     @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM Project p WHERE p.id = :id AND p.archivedAt IS NULL AND (p.company.id = :companyId OR p.id IN :memberProjectIds)")
     boolean existsVisibleToCustomer(@Param("id") UUID id, @Param("companyId") UUID companyId, @Param("memberProjectIds") List<UUID> memberProjectIds);
