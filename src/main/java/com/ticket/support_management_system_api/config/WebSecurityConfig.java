@@ -51,7 +51,9 @@ public class WebSecurityConfig {
                     "/swagger-ui.html",
                     "/v3/api-docs/**",
                     "/api/v1/auth/login",
-                    "/api/v1/auth/refresh"
+                    "/api/v1/auth/refresh",
+                    "/api/v1/health/liveness",
+                    "/api/v1/health/readiness"
                 ).permitAll()
                 .anyRequest().authenticated()
             )
