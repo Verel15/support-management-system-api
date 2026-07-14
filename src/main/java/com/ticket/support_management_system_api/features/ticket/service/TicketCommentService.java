@@ -9,12 +9,14 @@ import com.ticket.support_management_system_api.features.ticket.entities.Ticket;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketAssigneeLog;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketComment;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketStatusLog;
+import com.ticket.support_management_system_api.features.ticket.entities.TicketUpdateLog;
 import com.ticket.support_management_system_api.features.ticket.enums.ETicketAssigneeAction;
 import com.ticket.support_management_system_api.features.ticket.enums.ETicketCommentType;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketAssigneeLogRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketCommentRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketStatusLogRepository;
+import com.ticket.support_management_system_api.features.ticket.repository.TicketUpdateLogRepository;
 import com.ticket.support_management_system_api.features.user.entities.User;
 import com.ticket.support_management_system_api.features.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,7 @@ public class TicketCommentService {
     private final TicketCommentRepository commentRepository;
     private final TicketStatusLogRepository statusLogRepository;
     private final TicketAssigneeLogRepository assigneeLogRepository;
+    private final TicketUpdateLogRepository updateLogRepository;
     private final TicketRepository ticketRepository;
     private final UserRepository userRepository;
     private final NotificationEventPublisher notificationEventPublisher;
@@ -62,6 +65,9 @@ public class TicketCommentService {
 
         assigneeLogRepository.findAllByTicketId(ticketId)
                 .forEach(l -> items.add(toTimelineAssigneeLog(l)));
+
+        updateLogRepository.findAllByTicketId(ticketId)
+                .forEach(l -> items.add(toTimelineUpdateLog(l)));
 
         items.sort(Comparator.comparing(TicketTimelineItem::getCreatedAt));
         return items;
@@ -154,6 +160,21 @@ public class TicketCommentService {
                 .authorProfileImageUrl(changedBy.getProfileImageUrl())
                 .assigneeUserId(assigneeUser.getId())
                 .assigneeFullName(assigneeUser.getFirstName() + " " + assigneeUser.getLastName())
+                .build();
+    }
+
+    private TicketTimelineItem toTimelineUpdateLog(TicketUpdateLog log) {
+        User changedBy = log.getChangedBy();
+        return TicketTimelineItem.builder()
+                .id(log.getId())
+                .type(ETicketCommentType.FIELD_UPDATED)
+                .createdAt(log.getCreatedAt())
+                .authorId(changedBy.getId())
+                .authorFullName(changedBy.getFirstName() + " " + changedBy.getLastName())
+                .authorProfileImageUrl(changedBy.getProfileImageUrl())
+                .fieldName(log.getFieldName())
+                .oldValue(log.getOldValue())
+                .newValue(log.getNewValue())
                 .build();
     }
 }

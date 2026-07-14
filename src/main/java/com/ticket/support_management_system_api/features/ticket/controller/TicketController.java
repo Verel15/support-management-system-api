@@ -104,4 +104,12 @@ public class TicketController {
             @AuthenticationPrincipal JwtPrincipal user) {
         return ResponseEntity.ok(ApiResponse.success("เปลี่ยนสถานะ Ticket สำเร็จ", ticketService.changeStatus(id, request, user.userId())));
     }
+
+    @PatchMapping("/{id}/due-date")
+    public ResponseEntity<ApiResponse<TicketDetailResponse>> updateDueDate(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateTicketDueDateRequest request,
+            @AuthenticationPrincipal JwtPrincipal user) {
+        return ResponseEntity.ok(ApiResponse.success("อัปเดตครบกำหนด Ticket สำเร็จ", ticketService.updateDueDate(id, request, user.userId())));
+    }
 }

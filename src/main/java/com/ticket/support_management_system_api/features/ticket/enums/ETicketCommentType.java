@@ -4,5 +4,6 @@ public enum ETicketCommentType {
     COMMENT,
     STATUS_CHANGE,
     ASSIGNEE_ADDED,
-    ASSIGNEE_REMOVED
+    ASSIGNEE_REMOVED,
+    FIELD_UPDATED
 }

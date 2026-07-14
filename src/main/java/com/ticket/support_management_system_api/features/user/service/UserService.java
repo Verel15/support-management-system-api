@@ -90,7 +90,6 @@ public class UserService {
                 .status(CommonStatus.ACTIVE)
                 .build();
         user = userRepository.save(user);
-
         if (request.getAccountType() == AccountType.CUSTOMER) {
             saveCustomerDetails(user, request);
         } else {

@@ -25,6 +25,7 @@ import com.ticket.support_management_system_api.features.ticket.entities.Ticket;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketAssignee;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketAssigneeLog;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketStatusLog;
+import com.ticket.support_management_system_api.features.ticket.entities.TicketUpdateLog;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketYearCounter;
 import com.ticket.support_management_system_api.features.ticket.enums.ESuggestedAssigneeReason;
 import com.ticket.support_management_system_api.features.ticket.enums.ETicketAssigneeAction;
@@ -32,6 +33,7 @@ import com.ticket.support_management_system_api.features.ticket.repository.Ticke
 import com.ticket.support_management_system_api.features.ticket.repository.TicketAssigneeRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketStatusLogRepository;
+import com.ticket.support_management_system_api.features.ticket.repository.TicketUpdateLogRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketYearCounterRepository;
 import com.ticket.support_management_system_api.features.ticket_sub_category.entities.TicketSubCategory;
 import com.ticket.support_management_system_api.features.ticket_sub_category.repository.TicketSubCategoryRepository;
@@ -73,6 +75,7 @@ public class TicketService {
     private final ProjectMemberRepository projectMemberRepository;
     private final ExternalDetailsRepository externalDetailsRepository;
     private final TicketAssigneeLogRepository ticketAssigneeLogRepository;
+    private final TicketUpdateLogRepository ticketUpdateLogRepository;
 
     private static final List<EStatusGroup> CLOSED_STATUS_GROUPS = List.of(EStatusGroup.SUCCESS, EStatusGroup.FAILED);
 
@@ -271,21 +274,42 @@ public class TicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("ไม่พบประเภทย่อย Ticket id: " + request.getSubCategoryId()));
         StatusFlows statusFlow = subCategory.getCategory().getStatusFlow();
         boolean statusFlowChanged = !ticket.getStatusFlow().getId().equals(statusFlow.getId());
+        boolean projectChanged = !ticket.getProject().getId().equals(project.getId());
 
-        if (request.getTitle() != null) {
+        User actor = userRepository.findById(actorUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("ไม่พบผู้ใช้ id: " + actorUserId));
+
+        String oldTitle = ticket.getTitle();
+        String oldDescription = ticket.getDescription();
+        String oldProjectName = ticket.getProject().getName();
+        String oldSubCategoryName = ticket.getSubCategory().getName();
+        LocalDateTime oldDueDate = ticket.getDueDate();
+
+        List<TicketUpdateLog> updateLogs = new ArrayList<>();
+
+        if (request.getTitle() != null && !request.getTitle().equals(oldTitle)) {
             ticket.setTitle(request.getTitle());
+            updateLogs.add(buildUpdateLog(ticket, actor, "title", oldTitle, request.getTitle()));
         }
-        if (request.getDescription() != null) {
+        if (request.getDescription() != null && !request.getDescription().equals(oldDescription)) {
             ticket.setDescription(request.getDescription());
+            updateLogs.add(buildUpdateLog(ticket, actor, "description", oldDescription, request.getDescription()));
+        }
+        if (projectChanged) {
+            updateLogs.add(buildUpdateLog(ticket, actor, "project", oldProjectName, project.getName()));
+        }
+        if (!ticket.getSubCategory().getId().equals(subCategory.getId())) {
+            updateLogs.add(buildUpdateLog(ticket, actor, "subCategory", oldSubCategoryName, subCategory.getName()));
         }
         ticket.setProject(project);
         ticket.setSubCategory(subCategory);
         ticket.setStatusFlow(statusFlow);
         ticket.setDueDate(computeDueDate(ticket.getCreatedAt(), subCategory.getPriorityLevel()));
+        if (!ticket.getDueDate().equals(oldDueDate)) {
+            updateLogs.add(buildUpdateLog(ticket, actor, "dueDate", String.valueOf(oldDueDate), String.valueOf(ticket.getDueDate())));
+        }
 
         if (statusFlowChanged) {
-            User actor = userRepository.findById(actorUserId)
-                    .orElseThrow(() -> new ResourceNotFoundException("ไม่พบผู้ใช้ id: " + actorUserId));
             Statuses newStartStatus = resolveStartStatus(statusFlow.getId());
             Statuses oldStatus = ticket.getCurrentStatus();
             ticket.setCurrentStatus(newStartStatus);
@@ -300,6 +324,12 @@ public class TicketService {
         }
 
         ticket = ticketRepository.save(ticket);
+        ticketUpdateLogRepository.saveAll(updateLogs);
+
+        if (projectChanged) {
+            reassignForProjectChange(ticket, actor);
+        }
+
         notificationEventPublisher.publishTicketEvent(
                 ENotificationType.TICKET_UPDATED, ticket.getId(), actorUserId,
                 "อัพเดต Ticket: " + ticket.getTitle(),
@@ -308,6 +338,51 @@ public class TicketService {
 
         List<TicketAssignee> assignees = ticketAssigneeRepository.findAllByTicketIdAndArchivedAtIsNull(id);
         return toDetailResponse(ticket, assignees);
+    }
+
+    private TicketUpdateLog buildUpdateLog(Ticket ticket, User actor, String fieldName, String oldValue, String newValue) {
+        return TicketUpdateLog.builder()
+                .ticket(ticket)
+                .changedBy(actor)
+                .fieldName(fieldName)
+                .oldValue(oldValue)
+                .newValue(newValue)
+                .build();
+    }
+
+    private void reassignForProjectChange(Ticket ticket, User actor) {
+        List<TicketAssignee> currentAssignees = ticketAssigneeRepository.findAllByTicketIdAndArchivedAtIsNull(ticket.getId());
+        boolean anyRemoved = false;
+        for (TicketAssignee assignee : currentAssignees) {
+            boolean stillMember = projectMemberRepository.existsByProjectIdAndUserIdAndArchivedAtIsNull(
+                    ticket.getProject().getId(), assignee.getUser().getId());
+            if (stillMember) {
+                continue;
+            }
+            anyRemoved = true;
+            assignee.setArchivedAt(LocalDateTime.now());
+            assignee.setArchivedBy(actor.getId());
+            ticketAssigneeRepository.save(assignee);
+
+            ticketAssigneeLogRepository.save(TicketAssigneeLog.builder()
+                    .ticket(ticket)
+                    .changedBy(actor)
+                    .assigneeUser(assignee.getUser())
+                    .action(ETicketAssigneeAction.REMOVED)
+                    .build());
+
+            notificationEventPublisher.publishTicketEvent(
+                    ENotificationType.TICKET_UNASSIGNED, ticket.getId(), actor.getId(),
+                    "ยกเลิกการมอบหมาย Ticket",
+                    assignee.getUser().getFirstName() + " " + assignee.getUser().getLastName() + " ถูกยกเลิกการมอบหมายเนื่องจากเปลี่ยนโครงการ",
+                    Map.of());
+        }
+
+        if (anyRemoved) {
+            ticket.setRebalanceSuggestedAt(null);
+            ticketRepository.save(ticket);
+            autoAssign(ticket, actor);
+        }
     }
 
     public void delete(UUID id, UUID actorUserId) {
@@ -357,6 +432,30 @@ public class TicketService {
                         "fromStatusGroup", fromStatus.getGroup().name(),
                         "toStatusName", toStatus.getName(),
                         "toStatusGroup", toStatus.getGroup().name()
+                ));
+
+        List<TicketAssignee> assignees = ticketAssigneeRepository.findAllByTicketIdAndArchivedAtIsNull(id);
+        return toDetailResponse(ticket, assignees);
+    }
+
+    public TicketDetailResponse updateDueDate(UUID id, UpdateTicketDueDateRequest request, UUID actorUserId) {
+        Ticket ticket = getOrThrow(id);
+        User actor = userRepository.findById(actorUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("ไม่พบผู้ใช้ id: " + actorUserId));
+
+        LocalDateTime oldDueDate = ticket.getDueDate();
+        ticket.setDueDate(request.getDueDate());
+        ticket = ticketRepository.save(ticket);
+        ticketUpdateLogRepository.save(buildUpdateLog(ticket, actor, "dueDate", String.valueOf(oldDueDate), String.valueOf(ticket.getDueDate())));
+
+        notificationEventPublisher.publishTicketEvent(
+                ENotificationType.TICKET_UPDATED, ticket.getId(), actorUserId,
+                "อัพเดตครบกำหนด Ticket: " + ticket.getTitle(),
+                "มีการเปลี่ยนวันครบกำหนดของ Ticket",
+                Map.of(
+                        "ticketTitle", ticket.getTitle(),
+                        "oldDueDate", String.valueOf(oldDueDate),
+                        "newDueDate", String.valueOf(ticket.getDueDate())
                 ));
 
         List<TicketAssignee> assignees = ticketAssigneeRepository.findAllByTicketIdAndArchivedAtIsNull(id);

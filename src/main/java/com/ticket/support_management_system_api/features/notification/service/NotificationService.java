@@ -66,9 +66,9 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<NotificationResponse> getFeed(UUID userId, Pageable pageable) {
+    public PageResponse<NotificationResponse> getFeed(UUID userId, ENotificationType type, Pageable pageable) {
         return PaginationUtils.toPageResponse(
-                notificationRepository.findFeedByRecipientId(userId, pageable),
+                notificationRepository.findFeedByRecipientId(userId, type, pageable),
                 this::toResponse
         );
     }

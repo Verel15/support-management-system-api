@@ -29,4 +29,8 @@ public class TicketTimelineItem {
 
     private UUID assigneeUserId;
     private String assigneeFullName;
+
+    private String fieldName;
+    private String oldValue;
+    private String newValue;
 }

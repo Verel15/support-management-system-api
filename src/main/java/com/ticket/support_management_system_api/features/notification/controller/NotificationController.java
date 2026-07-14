@@ -5,6 +5,7 @@ import com.ticket.support_management_system_api.common.response.PageResponse;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.notification.dto.NotificationResponse;
 import com.ticket.support_management_system_api.features.notification.dto.UnreadCountResponse;
+import com.ticket.support_management_system_api.features.notification.enums.ENotificationType;
 import com.ticket.support_management_system_api.features.notification.service.NotificationService;
 import com.ticket.support_management_system_api.features.notification.service.NotificationSseService;
 import lombok.RequiredArgsConstructor;
@@ -30,9 +31,10 @@ public class NotificationController {
     public ResponseEntity<ApiResponse<PageResponse<NotificationResponse>>> getFeed(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) ENotificationType type,
             @AuthenticationPrincipal JwtPrincipal user) {
         var pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return ResponseEntity.ok(ApiResponse.success(notificationService.getFeed(user.userId(), pageable)));
+        return ResponseEntity.ok(ApiResponse.success(notificationService.getFeed(user.userId(), type, pageable)));
     }
 
     @GetMapping("/unread-count")

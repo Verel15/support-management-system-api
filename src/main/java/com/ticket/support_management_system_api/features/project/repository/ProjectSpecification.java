@@ -45,7 +45,7 @@ public class ProjectSpecification {
     }
 
     public static Specification<Project> visibleToCustomer(UUID companyId, List<UUID> memberProjectIds) {
-        return (root, query, cb) -> cb.or(
+        return (root, query, cb) -> cb.and(
                 cb.equal(root.get("company").get("id"), companyId),
                 root.get("id").in(memberProjectIds)
         );
