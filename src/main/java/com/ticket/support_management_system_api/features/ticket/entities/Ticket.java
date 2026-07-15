@@ -16,15 +16,14 @@ import java.time.LocalDateTime;
 @Table(
     name = "tickets",
     uniqueConstraints = @UniqueConstraint(
-        name = "uq_tickets_year_seq",
-        columnNames = {"ticket_year", "ticket_seq"}
+        name = "uq_tickets_ticket_no",
+        columnNames = {"ticket_no"}
     ),
     indexes = {
         @Index(name = "idx_tickets_archived_at", columnList = "archived_at"),
         @Index(name = "idx_tickets_project_id", columnList = "project_id"),
         @Index(name = "idx_tickets_status_flow_id", columnList = "status_flow_id"),
-        @Index(name = "idx_tickets_current_status_id", columnList = "current_status_id"),
-        @Index(name = "idx_tickets_year_seq", columnList = "ticket_year, ticket_seq")
+        @Index(name = "idx_tickets_current_status_id", columnList = "current_status_id")
     }
 )
 @Getter
@@ -40,11 +39,8 @@ public class Ticket extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "ticket_year", nullable = false)
-    private Integer ticketYear;
-
-    @Column(name = "ticket_seq", nullable = false)
-    private Integer ticketSeq;
+    @Column(name = "ticket_no", nullable = false, unique = true)
+    private String ticketNo;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)

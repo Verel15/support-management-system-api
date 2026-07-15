@@ -209,8 +209,7 @@ public class TicketService {
         Ticket ticket = Ticket.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
-                .ticketYear(year)
-                .ticketSeq(seq)
+                .ticketNo(formatTicketId(year, seq))
                 .project(project)
                 .subCategory(subCategory)
                 .currentStatus(startStatus)
@@ -470,8 +469,7 @@ public class TicketService {
         return counter.getLastSeq();
     }
 
-    private String formatTicketId(Integer year, Integer seq) {
-        if (year == null || seq == null) return "TK-???-????";
+    private String formatTicketId(int year, int seq) {
         return String.format("TK-%d-%04d", year, seq);
     }
 
@@ -575,7 +573,7 @@ public class TicketService {
     private TicketListResponse toListResponse(Ticket ticket, List<TicketAssignee> assignees) {
         return TicketListResponse.builder()
                 .id(ticket.getId())
-                .ticketId(formatTicketId(ticket.getTicketYear(), ticket.getTicketSeq()))
+                .ticketId(ticket.getTicketNo())
                 .title(ticket.getTitle())
                 .projectId(ticket.getProject().getId())
                 .projectName(ticket.getProject().getName())
@@ -602,7 +600,7 @@ public class TicketService {
     private TicketDetailResponse toDetailResponse(Ticket ticket, List<TicketAssignee> assignees) {
         return TicketDetailResponse.builder()
                 .id(ticket.getId())
-                .ticketId(formatTicketId(ticket.getTicketYear(), ticket.getTicketSeq()))
+                .ticketId(ticket.getTicketNo())
                 .title(ticket.getTitle())
                 .description(ticket.getDescription())
                 .createdAt(ticket.getCreatedAt())
