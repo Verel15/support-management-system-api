@@ -473,6 +473,10 @@ public class TicketService {
         return String.format("TK-%d-%04d", year, seq);
     }
 
+    private LocalDateTime toLocalDateTime(java.time.Instant instant) {
+        return LocalDateTime.ofInstant(instant, java.time.ZoneId.systemDefault());
+    }
+
     private Ticket getOrThrow(UUID id) {
         return ticketRepository.findByIdAndArchivedAtIsNull(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ไม่พบ Ticket id: " + id));
@@ -536,6 +540,12 @@ public class TicketService {
             if (filter.getKeyword() != null && !filter.getKeyword().isBlank()) {
                 String kw = "%" + filter.getKeyword().trim().toLowerCase() + "%";
                 predicates.add(cb.like(cb.lower(root.get("title")), kw));
+            }
+            if (filter.getDateFrom() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), toLocalDateTime(filter.getDateFrom())));
+            }
+            if (filter.getDateTo() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), toLocalDateTime(filter.getDateTo())));
             }
             if (Boolean.TRUE.equals(filter.getOverdue())) {
                 predicates.add(cb.lessThan(root.get("dueDate"), LocalDateTime.now()));

@@ -4,6 +4,7 @@ import com.ticket.support_management_system_api.features.status.enums.EStatusGro
 import com.ticket.support_management_system_api.features.ticket.enums.ERemainingTimeFilter;
 import lombok.Data;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Data
@@ -17,4 +18,6 @@ public class TicketFilterRequest {
     private String keyword;
     private Boolean overdue;
     private ERemainingTimeFilter remainingTime;
+    private Instant dateFrom;
+    private Instant dateTo;
 }

@@ -94,8 +94,7 @@ class TicketServiceTest {
 
         ticket = Ticket.builder()
                 .title("t")
-                .ticketYear(2026)
-                .ticketSeq(1)
+                .ticketNo("TK-2026-0001")
                 .project(project)
                 .subCategory(subCategory)
                 .currentStatus(status)

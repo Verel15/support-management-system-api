@@ -11,6 +11,8 @@ import com.ticket.support_management_system_api.features.project.entities.Projec
 import com.ticket.support_management_system_api.features.project.repository.ProjectDocumentRepository;
 import com.ticket.support_management_system_api.features.project.repository.ProjectMemberRepository;
 import com.ticket.support_management_system_api.features.project.repository.ProjectRepository;
+import com.ticket.support_management_system_api.features.ticket.repository.TicketRepository;
+import com.ticket.support_management_system_api.features.ticket.service.TicketService;
 import com.ticket.support_management_system_api.features.user.entities.CustomerDetails;
 import com.ticket.support_management_system_api.features.user.repository.CustomerDetailsRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,6 +56,10 @@ class ProjectServiceTest {
     private CustomerDetailsRepository customerDetailsRepository;
     @Mock
     private NotificationEventPublisher notificationEventPublisher;
+    @Mock
+    private TicketRepository ticketRepository;
+    @Mock
+    private TicketService ticketService;
 
     @InjectMocks
     private ProjectService projectService;
@@ -83,6 +89,8 @@ class ProjectServiceTest {
         when(memberRepository.countByProjectIdAndRoleAndArchivedAtIsNull(any(), any())).thenReturn(0L);
         when(documentRepository.countByProjectIdAndArchivedAtIsNull(any())).thenReturn(0L);
         when(memberRepository.findAllByProjectIdAndArchivedAtIsNull(any())).thenReturn(List.of());
+        when(ticketRepository.countByProjectIdAndArchivedAtIsNull(any())).thenReturn(0L);
+        when(ticketRepository.countByProjectIdAndCurrentStatus_GroupAndArchivedAtIsNull(any(), any())).thenReturn(0L);
     }
 
     @Test
