@@ -47,4 +47,23 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID>, JpaSpecif
             """)
     List<Ticket> findDueSoonUnnotified(@Param("closedGroups") List<EStatusGroup> closedGroups,
                                         @Param("threshold") LocalDateTime threshold);
+
+    @Query("""
+            SELECT t FROM Ticket t
+            WHERE t.archivedAt IS NULL
+              AND LOWER(t.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            ORDER BY t.createdAt DESC
+            """)
+    List<Ticket> searchByTitle(@Param("keyword") String keyword, org.springframework.data.domain.Pageable pageable);
+
+    @Query("""
+            SELECT t FROM Ticket t
+            WHERE t.archivedAt IS NULL
+              AND t.project.company.id = :companyId
+              AND LOWER(t.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            ORDER BY t.createdAt DESC
+            """)
+    List<Ticket> searchByTitleAndCompanyId(@Param("keyword") String keyword,
+                                            @Param("companyId") UUID companyId,
+                                            org.springframework.data.domain.Pageable pageable);
 }
