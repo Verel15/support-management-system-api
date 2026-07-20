@@ -2,6 +2,7 @@ package com.ticket.support_management_system_api.features.project.service;
 
 import com.ticket.support_management_system_api.common.exception.FileValidationException;
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
+import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.project.dto.ProjectDocumentResponse;
 import com.ticket.support_management_system_api.features.project.entities.Project;
 import com.ticket.support_management_system_api.features.project.entities.ProjectDocument;
@@ -29,12 +30,14 @@ public class ProjectDocumentService {
     private final ProjectDocumentRepository documentRepository;
     private final ProjectRepository projectRepository;
     private final FileUploadService fileUploadService;
+    private final ProjectService projectService;
 
     @Transactional(readOnly = true)
-    public List<ProjectDocumentResponse> findAllByProject(UUID projectId) {
+    public List<ProjectDocumentResponse> findAllByProject(UUID projectId, JwtPrincipal user) {
         if (!projectRepository.existsById(projectId)) {
             throw new ResourceNotFoundException("ไม่พบโปรเจค id: " + projectId);
         }
+        projectService.assertVisibleToCustomer(projectId, user);
         return documentRepository.findAllByProjectIdAndArchivedAtIsNull(projectId)
                 .stream()
                 .map(this::toResponse)

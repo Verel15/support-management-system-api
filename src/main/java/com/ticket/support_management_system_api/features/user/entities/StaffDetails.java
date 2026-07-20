@@ -11,14 +11,14 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "external_details")
+@Table(name = "staff_details")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 
-public class ExternalDetails {
+public class StaffDetails {
     @Id
     private UUID userId;
 

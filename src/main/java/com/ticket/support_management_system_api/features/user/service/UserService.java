@@ -16,10 +16,10 @@ import com.ticket.support_management_system_api.features.user.dto.UserFilterRequ
 import com.ticket.support_management_system_api.features.user.dto.UserRequest;
 import com.ticket.support_management_system_api.features.user.dto.UserResponse;
 import com.ticket.support_management_system_api.features.user.entities.CustomerDetails;
-import com.ticket.support_management_system_api.features.user.entities.ExternalDetails;
+import com.ticket.support_management_system_api.features.user.entities.StaffDetails;
 import com.ticket.support_management_system_api.features.user.entities.User;
 import com.ticket.support_management_system_api.features.user.repository.CustomerDetailsRepository;
-import com.ticket.support_management_system_api.features.user.repository.ExternalDetailsRepository;
+import com.ticket.support_management_system_api.features.user.repository.StaffDetailsRepository;
 import com.ticket.support_management_system_api.features.user.repository.UserRepository;
 import com.ticket.support_management_system_api.features.user.repository.UserSpecification;
 import com.ticket.support_management_system_api.features.user_type.entities.UserType;
@@ -46,7 +46,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final CustomerDetailsRepository customerDetailsRepository;
-    private final ExternalDetailsRepository externalDetailsRepository;
+    private final StaffDetailsRepository staffDetailsRepository;
     private final CompanyRepository companyRepository;
     private final UserTypeRepository userTypeRepository;
     private final DepartmentRepository departmentRepository;
@@ -63,10 +63,10 @@ public class UserService {
 
         Map<UUID, CustomerDetails> customerMap = customerDetailsRepository.findAllByUserIdIn(ids)
                 .stream().collect(Collectors.toMap(cd -> cd.getUserId(), cd -> cd));
-        Map<UUID, ExternalDetails> externalMap = externalDetailsRepository.findAllByUserIdIn(ids)
-                .stream().collect(Collectors.toMap(ed -> ed.getUserId(), ed -> ed));
+        Map<UUID, StaffDetails> staffMap = staffDetailsRepository.findAllByUserIdIn(ids)
+                .stream().collect(Collectors.toMap(sd -> sd.getUserId(), sd -> sd));
 
-        return PaginationUtils.toPageResponse(page, user -> toResponse(user, customerMap, externalMap));
+        return PaginationUtils.toPageResponse(page, user -> toResponse(user, customerMap, staffMap));
     }
 
     @Transactional(readOnly = true)
@@ -92,8 +92,8 @@ public class UserService {
         user = userRepository.save(user);
         if (request.getAccountType() == AccountType.CUSTOMER) {
             saveCustomerDetails(user, request);
-        } else {
-            saveExternalDetails(user, request);
+        } else if (request.getAccountType() == AccountType.STAFF) {
+            saveStaffDetails(user, request);
         }
 
         return toResponse(user);
@@ -117,8 +117,8 @@ public class UserService {
 
         if (user.getAccountType() == AccountType.CUSTOMER) {
             saveCustomerDetails(user, request);
-        } else {
-            saveExternalDetails(user, request);
+        } else if (user.getAccountType() == AccountType.STAFF) {
+            saveStaffDetails(user, request);
         }
 
         return toResponse(user);
@@ -140,7 +140,7 @@ public class UserService {
         customerDetailsRepository.save(details);
     }
 
-    private void saveExternalDetails(User user, UserRequest request) {
+    private void saveStaffDetails(User user, UserRequest request) {
         UserType userType = userTypeRepository.findById(request.getUserTypeId())
                 .orElseThrow(() -> new ResourceNotFoundException("ไม่พบข้อมูลประเภทผู้ใช้ id: " + request.getUserTypeId()));
 
@@ -154,12 +154,12 @@ public class UserService {
                         .orElseThrow(() -> new ResourceNotFoundException("ไม่พบข้อมูลตำแหน่ง id: " + request.getPositionId()))
                 : null;
 
-        ExternalDetails details = externalDetailsRepository.findById(user.getId())
-                .orElse(ExternalDetails.builder().user(user).build());
+        StaffDetails details = staffDetailsRepository.findById(user.getId())
+                .orElse(StaffDetails.builder().user(user).build());
         details.setUserType(userType);
         details.setDepartment(department);
         details.setPosition(position);
-        externalDetailsRepository.save(details);
+        staffDetailsRepository.save(details);
     }
 
     private String generatePassword() {
@@ -183,16 +183,16 @@ public class UserService {
     private UserResponse toResponse(User user) {
         CustomerDetails cd = user.getAccountType() == AccountType.CUSTOMER
                 ? customerDetailsRepository.findById(user.getId()).orElse(null) : null;
-        ExternalDetails ed = user.getAccountType() == AccountType.EXTERNAL
-                ? externalDetailsRepository.findById(user.getId()).orElse(null) : null;
-        return buildResponse(user, cd, ed);
+        StaffDetails sd = user.getAccountType() == AccountType.STAFF
+                ? staffDetailsRepository.findById(user.getId()).orElse(null) : null;
+        return buildResponse(user, cd, sd);
     }
 
-    private UserResponse toResponse(User user, Map<UUID, CustomerDetails> customerMap, Map<UUID, ExternalDetails> externalMap) {
-        return buildResponse(user, customerMap.get(user.getId()), externalMap.get(user.getId()));
+    private UserResponse toResponse(User user, Map<UUID, CustomerDetails> customerMap, Map<UUID, StaffDetails> staffMap) {
+        return buildResponse(user, customerMap.get(user.getId()), staffMap.get(user.getId()));
     }
 
-    private UserResponse buildResponse(User user, CustomerDetails cd, ExternalDetails ed) {
+    private UserResponse buildResponse(User user, CustomerDetails cd, StaffDetails sd) {
         UserResponse.UserResponseBuilder builder = UserResponse.builder()
                 .id(user.getId())
                 .accountType(user.getAccountType())
@@ -209,18 +209,18 @@ public class UserService {
             builder.companyId(cd.getCompany().getId());
             builder.companyName(cd.getCompany().getName());
         }
-        if (ed != null) {
-            if (ed.getUserType() != null) {
-                builder.userTypeId(ed.getUserType().getId());
-                builder.userTypeName(ed.getUserType().getName());
+        if (sd != null) {
+            if (sd.getUserType() != null) {
+                builder.userTypeId(sd.getUserType().getId());
+                builder.userTypeName(sd.getUserType().getName());
             }
-            if (ed.getDepartment() != null) {
-                builder.departmentId(ed.getDepartment().getId());
-                builder.departmentName(ed.getDepartment().getName());
+            if (sd.getDepartment() != null) {
+                builder.departmentId(sd.getDepartment().getId());
+                builder.departmentName(sd.getDepartment().getName());
             }
-            if (ed.getPosition() != null) {
-                builder.positionId(ed.getPosition().getId());
-                builder.positionName(ed.getPosition().getName());
+            if (sd.getPosition() != null) {
+                builder.positionId(sd.getPosition().getId());
+                builder.positionName(sd.getPosition().getName());
             }
         }
 

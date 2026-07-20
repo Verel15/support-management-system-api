@@ -37,9 +37,9 @@ import com.ticket.support_management_system_api.features.ticket.repository.Ticke
 import com.ticket.support_management_system_api.features.ticket.repository.TicketYearCounterRepository;
 import com.ticket.support_management_system_api.features.ticket_sub_category.entities.TicketSubCategory;
 import com.ticket.support_management_system_api.features.ticket_sub_category.repository.TicketSubCategoryRepository;
-import com.ticket.support_management_system_api.features.user.entities.ExternalDetails;
+import com.ticket.support_management_system_api.features.user.entities.StaffDetails;
 import com.ticket.support_management_system_api.features.user.entities.User;
-import com.ticket.support_management_system_api.features.user.repository.ExternalDetailsRepository;
+import com.ticket.support_management_system_api.features.user.repository.StaffDetailsRepository;
 import com.ticket.support_management_system_api.features.user.repository.UserRepository;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
@@ -73,7 +73,7 @@ public class TicketService {
     private final TicketYearCounterRepository yearCounterRepository;
     private final NotificationEventPublisher notificationEventPublisher;
     private final ProjectMemberRepository projectMemberRepository;
-    private final ExternalDetailsRepository externalDetailsRepository;
+    private final StaffDetailsRepository staffDetailsRepository;
     private final TicketAssigneeLogRepository ticketAssigneeLogRepository;
     private final TicketUpdateLogRepository ticketUpdateLogRepository;
 
@@ -115,7 +115,7 @@ public class TicketService {
         }
 
         User bestUser = result.member().getUser();
-        ExternalDetails bestDetails = result.detailsByUserId().get(bestUser.getId());
+        StaffDetails bestDetails = result.detailsByUserId().get(bestUser.getId());
         SuggestedAssigneeUser suggested = SuggestedAssigneeUser.builder()
                 .userId(bestUser.getId())
                 .fullName(bestUser.getFirstName() + " " + bestUser.getLastName())
@@ -131,7 +131,7 @@ public class TicketService {
     }
 
     private record BestAssigneeResult(ProjectMember member, long openTicketCount,
-                                       Map<UUID, ExternalDetails> detailsByUserId, ESuggestedAssigneeReason reason) {
+                                       Map<UUID, StaffDetails> detailsByUserId, ESuggestedAssigneeReason reason) {
         static BestAssigneeResult empty(ESuggestedAssigneeReason reason) {
             return new BestAssigneeResult(null, 0, Map.of(), reason);
         }
@@ -145,13 +145,13 @@ public class TicketService {
         }
 
         List<UUID> candidateUserIds = assigneeMembers.stream().map(m -> m.getUser().getId()).toList();
-        Map<UUID, ExternalDetails> detailsByUserId = externalDetailsRepository.findAllByUserIdIn(candidateUserIds)
+        Map<UUID, StaffDetails> detailsByUserId = staffDetailsRepository.findAllByUserIdIn(candidateUserIds)
                 .stream()
                 .collect(Collectors.toMap(d -> d.getUser().getId(), d -> d));
 
         List<ProjectMember> matchingMembers = assigneeMembers.stream()
                 .filter(m -> {
-                    ExternalDetails details = detailsByUserId.get(m.getUser().getId());
+                    StaffDetails details = detailsByUserId.get(m.getUser().getId());
                     return details != null && details.getPosition() != null
                             && details.getPosition().getId().equals(positionId);
                 })

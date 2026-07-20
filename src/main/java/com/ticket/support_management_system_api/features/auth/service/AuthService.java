@@ -15,7 +15,7 @@ import com.ticket.support_management_system_api.features.auth.entities.RefreshTo
 import com.ticket.support_management_system_api.features.auth.enums.EAuditEvent;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.auth.repository.RefreshTokenRepository;
-import com.ticket.support_management_system_api.features.user.repository.ExternalDetailsRepository;
+import com.ticket.support_management_system_api.features.user.repository.StaffDetailsRepository;
 import com.ticket.support_management_system_api.features.user.repository.UserRepository;
 import com.ticket.support_management_system_api.features.user.entities.User;
 import com.ticket.support_management_system_api.features.user_type.entities.UserType;
@@ -38,7 +38,7 @@ public class AuthService {
     private static final String REFRESH_TOKEN_COOKIE = "refresh_token";
 
     private final UserRepository userRepository;
-    private final ExternalDetailsRepository externalDetailsRepository;
+    private final StaffDetailsRepository staffDetailsRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
@@ -216,9 +216,9 @@ public class AuthService {
     }
 
     private UserType resolveUserType(User user) {
-        if (user.getAccountType() == AccountType.EXTERNAL) {
-            return externalDetailsRepository.findById(user.getId())
-                    .map(ed -> ed.getUserType())
+        if (user.getAccountType() == AccountType.STAFF) {
+            return staffDetailsRepository.findById(user.getId())
+                    .map(sd -> sd.getUserType())
                     .orElse(null);
         }
         return null;

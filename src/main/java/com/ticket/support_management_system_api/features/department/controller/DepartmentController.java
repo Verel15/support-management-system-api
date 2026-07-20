@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,22 +29,26 @@ public class DepartmentController {
     private final ReauthenticationService reauthenticationService;
 
     @GetMapping
+    @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<DepartmentResponse>>> findAll() {
         return ResponseEntity.ok(ApiResponse.success(departmentService.findAll()));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<DepartmentResponse>> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(departmentService.findById(id)));
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('PERM_manageUserAccess')")
     public ResponseEntity<ApiResponse<DepartmentResponse>> create(@Valid @RequestBody DepartmentRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("สร้างข้อมูลแผนกสำเร็จ", departmentService.create(request)));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_manageUserAccess')")
     public ResponseEntity<ApiResponse<DepartmentResponse>> update(
             @PathVariable UUID id,
             @Valid @RequestBody DepartmentRequest request) {
@@ -51,6 +56,7 @@ public class DepartmentController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_manageUserAccess')")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID id,
             @Valid @RequestBody DeleteConfirmationRequest body,

@@ -24,13 +24,17 @@ public class TicketCommentController {
     private final TicketCommentService commentService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<TicketCommentResponse>>> findAll(@PathVariable UUID ticketId) {
-        return ResponseEntity.ok(ApiResponse.success(commentService.findAllByTicket(ticketId)));
+    public ResponseEntity<ApiResponse<List<TicketCommentResponse>>> findAll(
+            @PathVariable UUID ticketId,
+            @AuthenticationPrincipal JwtPrincipal user) {
+        return ResponseEntity.ok(ApiResponse.success(commentService.findAllByTicket(ticketId, user)));
     }
 
     @GetMapping("/timeline")
-    public ResponseEntity<ApiResponse<List<TicketTimelineItem>>> getTimeline(@PathVariable UUID ticketId) {
-        return ResponseEntity.ok(ApiResponse.success(commentService.getTimeline(ticketId)));
+    public ResponseEntity<ApiResponse<List<TicketTimelineItem>>> getTimeline(
+            @PathVariable UUID ticketId,
+            @AuthenticationPrincipal JwtPrincipal user) {
+        return ResponseEntity.ok(ApiResponse.success(commentService.getTimeline(ticketId, user)));
     }
 
     @PostMapping
@@ -39,6 +43,6 @@ public class TicketCommentController {
             @Valid @RequestBody AddCommentRequest request,
             @AuthenticationPrincipal JwtPrincipal user) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("เพิ่มความคิดเห็นสำเร็จ", commentService.addComment(ticketId, request, user.userId())));
+                .body(ApiResponse.success("เพิ่มความคิดเห็นสำเร็จ", commentService.addComment(ticketId, request, user)));
     }
 }

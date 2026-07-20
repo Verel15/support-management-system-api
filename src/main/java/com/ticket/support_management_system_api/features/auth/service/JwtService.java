@@ -21,12 +21,18 @@ public class JwtService {
 
     private final JwtProperties jwtProperties;
 
+    private static final List<String> ALL_PERMISSIONS = List.of(
+            "allProjectAccess", "notificationAccess", "dashboardAccess", "allTicketAccess",
+            "manageProjectAccess", "manageUserAccess", "manageCompanyAccess", "manageDataAccess");
+
     public String generateAccessToken(User user, UserType userType) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("email", user.getEmail());
         claims.put("accountType", user.getAccountType().name());
 
-        if (userType != null) {
+        if (user.getAccountType() == AccountType.ADMIN) {
+            claims.put("permissions", ALL_PERMISSIONS);
+        } else if (userType != null) {
             claims.put("userTypeId", userType.getId().toString());
             claims.put("permissions", extractPermissions(userType));
         } else {

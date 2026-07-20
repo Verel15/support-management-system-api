@@ -16,7 +16,7 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
     boolean existsByEmailAndIdNot(String email, UUID id);
     Optional<User> findByEmail(String email);
 
-    @Query("SELECT ed.user.id FROM ExternalDetails ed WHERE ed.userType.allTicketAccess = true AND ed.userType.allProjectAccess = true AND ed.user.archivedAt IS NULL")
+    @Query("SELECT sd.user.id FROM StaffDetails sd WHERE sd.userType.allTicketAccess = true AND sd.userType.allProjectAccess = true AND sd.user.archivedAt IS NULL")
     List<UUID> findAdminUserIds();
 
     @Query("""

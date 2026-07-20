@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,11 +28,13 @@ public class TicketAssigneeController {
     private final ReauthenticationService reauthenticationService;
 
     @GetMapping
+    @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<TicketAssigneeResponse>>> findAll(@PathVariable UUID ticketId) {
         return ResponseEntity.ok(ApiResponse.success(assigneeService.findAllByTicket(ticketId)));
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('PERM_manageProjectAccess')")
     public ResponseEntity<ApiResponse<TicketAssigneeResponse>> addAssignee(
             @PathVariable UUID ticketId,
             @Valid @RequestBody AddAssigneeRequest request,
@@ -41,6 +44,7 @@ public class TicketAssigneeController {
     }
 
     @DeleteMapping("/{userId}")
+    @PreAuthorize("hasAuthority('PERM_manageProjectAccess')")
     public ResponseEntity<ApiResponse<Void>> removeAssignee(
             @PathVariable UUID ticketId,
             @PathVariable UUID userId,

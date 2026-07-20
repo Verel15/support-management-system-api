@@ -56,7 +56,7 @@ class SearchServiceTest {
 
     @Test
     void blankKeywordThrows() {
-        JwtPrincipal external = new JwtPrincipal(EXTERNAL_USER_ID, "staff@x.com", AccountType.EXTERNAL, null, List.of());
+        JwtPrincipal external = new JwtPrincipal(EXTERNAL_USER_ID, "staff@x.com", AccountType.STAFF, null, List.of());
         assertThatThrownBy(() -> searchService.search("  ", List.of(SearchResultType.TICKET), 5, external))
                 .isInstanceOf(BadRequestException.class);
     }
@@ -85,7 +85,7 @@ class SearchServiceTest {
 
     @Test
     void externalSearchIsNotCompanyScoped() {
-        JwtPrincipal external = new JwtPrincipal(EXTERNAL_USER_ID, "staff@x.com", AccountType.EXTERNAL, null, List.of());
+        JwtPrincipal external = new JwtPrincipal(EXTERNAL_USER_ID, "staff@x.com", AccountType.STAFF, null, List.of());
 
         Company otherCompany = Company.builder().name("บริษัท เอ็กซ์วายแซด").build();
         otherCompany.setId(UUID.randomUUID());
@@ -103,7 +103,7 @@ class SearchServiceTest {
 
     @Test
     void ticketResultTitleContainsKeywordForClientSideHighlight() {
-        JwtPrincipal external = new JwtPrincipal(EXTERNAL_USER_ID, "staff@x.com", AccountType.EXTERNAL, null, List.of());
+        JwtPrincipal external = new JwtPrincipal(EXTERNAL_USER_ID, "staff@x.com", AccountType.STAFF, null, List.of());
 
         Project project = Project.builder().name("โครงการ VPN").build();
         project.setId(UUID.randomUUID());
@@ -128,12 +128,12 @@ class SearchServiceTest {
 
     @Test
     void combinesMultipleTypesInSingleResponse() {
-        JwtPrincipal external = new JwtPrincipal(EXTERNAL_USER_ID, "staff@x.com", AccountType.EXTERNAL, null, List.of());
+        JwtPrincipal external = new JwtPrincipal(EXTERNAL_USER_ID, "staff@x.com", AccountType.STAFF, null, List.of());
 
         when(ticketRepository.searchByTitle(anyString(), any())).thenReturn(List.of());
         when(projectRepository.searchByName(anyString(), any())).thenReturn(List.of());
         User user = User.builder().firstName("กิตติ").lastName("วัฒนกุล")
-                .email("kitti@x.com").accountType(AccountType.EXTERNAL).build();
+                .email("kitti@x.com").accountType(AccountType.STAFF).build();
         user.setId(UUID.randomUUID());
         when(userRepository.searchByName(anyString(), any())).thenReturn(List.of(user));
 

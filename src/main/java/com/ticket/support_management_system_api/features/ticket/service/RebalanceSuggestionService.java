@@ -13,9 +13,9 @@ import com.ticket.support_management_system_api.features.ticket.entities.Ticket;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketAssignee;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketAssigneeRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketRepository;
-import com.ticket.support_management_system_api.features.user.entities.ExternalDetails;
+import com.ticket.support_management_system_api.features.user.entities.StaffDetails;
 import com.ticket.support_management_system_api.features.user.entities.User;
-import com.ticket.support_management_system_api.features.user.repository.ExternalDetailsRepository;
+import com.ticket.support_management_system_api.features.user.repository.StaffDetailsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -40,7 +40,7 @@ public class RebalanceSuggestionService {
     private final TicketRepository ticketRepository;
     private final TicketAssigneeRepository ticketAssigneeRepository;
     private final ProjectMemberRepository projectMemberRepository;
-    private final ExternalDetailsRepository externalDetailsRepository;
+    private final StaffDetailsRepository staffDetailsRepository;
     private final NotificationEventPublisher notificationEventPublisher;
 
     @Transactional(readOnly = true)
@@ -130,7 +130,7 @@ public class RebalanceSuggestionService {
     }
 
     private SuggestedAssigneeUser toSuggestedUser(User user, Workload workload, long openCount) {
-        ExternalDetails details = workload.detailsByUserId.get(user.getId());
+        StaffDetails details = workload.detailsByUserId.get(user.getId());
         return SuggestedAssigneeUser.builder()
                 .userId(user.getId())
                 .fullName(user.getFirstName() + " " + user.getLastName())
@@ -148,13 +148,13 @@ public class RebalanceSuggestionService {
         }
 
         List<UUID> candidateUserIds = assigneeMembers.stream().map(m -> m.getUser().getId()).toList();
-        Map<UUID, ExternalDetails> detailsByUserId = externalDetailsRepository.findAllByUserIdIn(candidateUserIds)
+        Map<UUID, StaffDetails> detailsByUserId = staffDetailsRepository.findAllByUserIdIn(candidateUserIds)
                 .stream()
                 .collect(Collectors.toMap(d -> d.getUser().getId(), d -> d));
 
         List<ProjectMember> matchingMembers = assigneeMembers.stream()
                 .filter(m -> {
-                    ExternalDetails details = detailsByUserId.get(m.getUser().getId());
+                    StaffDetails details = detailsByUserId.get(m.getUser().getId());
                     return details != null && details.getPosition() != null
                             && details.getPosition().getId().equals(positionId);
                 })
@@ -178,7 +178,7 @@ public class RebalanceSuggestionService {
     }
 
     private record Workload(List<ProjectMember> matchingMembers, List<UUID> matchingUserIds,
-                             Map<UUID, Long> openCountByUserId, Map<UUID, ExternalDetails> detailsByUserId,
+                             Map<UUID, Long> openCountByUserId, Map<UUID, StaffDetails> detailsByUserId,
                              double averageOpenCount) {
 
         ProjectMember leastLoadedOtherThan(UUID excludedUserId) {

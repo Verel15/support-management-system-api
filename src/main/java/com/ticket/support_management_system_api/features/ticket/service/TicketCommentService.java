@@ -1,6 +1,8 @@
 package com.ticket.support_management_system_api.features.ticket.service;
 
+import com.ticket.support_management_system_api.common.enums.AccountType;
 import com.ticket.support_management_system_api.common.exception.ResourceNotFoundException;
+import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.notification.service.NotificationEventPublisher;
 import com.ticket.support_management_system_api.features.ticket.dto.AddCommentRequest;
 import com.ticket.support_management_system_api.features.ticket.dto.TicketCommentResponse;
@@ -43,8 +45,8 @@ public class TicketCommentService {
     private final NotificationEventPublisher notificationEventPublisher;
 
     @Transactional(readOnly = true)
-    public List<TicketCommentResponse> findAllByTicket(UUID ticketId) {
-        getTicketOrThrow(ticketId);
+    public List<TicketCommentResponse> findAllByTicket(UUID ticketId, JwtPrincipal user) {
+        getTicketOrThrow(ticketId, user);
         return commentRepository.findAllByTicketIdAndArchivedAtIsNull(ticketId)
                 .stream()
                 .map(this::toResponse)
@@ -52,8 +54,8 @@ public class TicketCommentService {
     }
 
     @Transactional(readOnly = true)
-    public List<TicketTimelineItem> getTimeline(UUID ticketId) {
-        getTicketOrThrow(ticketId);
+    public List<TicketTimelineItem> getTimeline(UUID ticketId, JwtPrincipal user) {
+        getTicketOrThrow(ticketId, user);
 
         List<TicketTimelineItem> items = new ArrayList<>();
 
@@ -73,8 +75,9 @@ public class TicketCommentService {
         return items;
     }
 
-    public TicketCommentResponse addComment(UUID ticketId, AddCommentRequest request, UUID actorUserId) {
-        Ticket ticket = getTicketOrThrow(ticketId);
+    public TicketCommentResponse addComment(UUID ticketId, AddCommentRequest request, JwtPrincipal user) {
+        Ticket ticket = getTicketOrThrow(ticketId, user);
+        UUID actorUserId = user.userId();
         User author = userRepository.findById(actorUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("ไม่พบผู้ใช้ id: " + actorUserId));
 
@@ -99,9 +102,13 @@ public class TicketCommentService {
         return toResponse(saved);
     }
 
-    private Ticket getTicketOrThrow(UUID ticketId) {
-        return ticketRepository.findByIdAndArchivedAtIsNull(ticketId)
+    private Ticket getTicketOrThrow(UUID ticketId, JwtPrincipal user) {
+        Ticket ticket = ticketRepository.findByIdAndArchivedAtIsNull(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("ไม่พบ Ticket id: " + ticketId));
+        if (user.accountType() == AccountType.CUSTOMER && !ticket.getRequester().getId().equals(user.userId())) {
+            throw new ResourceNotFoundException("ไม่พบ Ticket id: " + ticketId);
+        }
+        return ticket;
     }
 
     private TicketCommentResponse toResponse(TicketComment comment) {

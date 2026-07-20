@@ -3,6 +3,7 @@ package com.ticket.support_management_system_api.features.user.repository;
 import com.ticket.support_management_system_api.common.utils.DateRangeUtils;
 import com.ticket.support_management_system_api.features.user.dto.UserFilterRequest;
 import com.ticket.support_management_system_api.features.user.entities.CustomerDetails;
+import com.ticket.support_management_system_api.features.user.entities.StaffDetails;
 import com.ticket.support_management_system_api.features.user.entities.User;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Subquery;
@@ -37,6 +38,20 @@ public class UserSpecification {
                         cb.like(cb.lower(root.get("email")), kw),
                         cb.like(cb.lower(cb.concat(cb.concat(root.get("firstName"), " "), root.get("lastName"))), kw)
                 ));
+            }
+
+            if (filter.getCompanyId() != null) {
+                Subquery<UUID> sub = query.subquery(UUID.class);
+                var cdRoot = sub.from(CustomerDetails.class);
+                sub.select(cdRoot.get("userId")).where(cb.equal(cdRoot.get("company").get("id"), filter.getCompanyId()));
+                predicates.add(root.get("id").in(sub));
+            }
+
+            if (filter.getUserTypeId() != null) {
+                Subquery<UUID> sub = query.subquery(UUID.class);
+                var sdRoot = sub.from(StaffDetails.class);
+                sub.select(sdRoot.get("userId")).where(cb.equal(sdRoot.get("userType").get("id"), filter.getUserTypeId()));
+                predicates.add(root.get("id").in(sub));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

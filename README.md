@@ -67,6 +67,76 @@ API พร้อมใช้งานที่: `http://localhost:8080`
 
 ---
 
+### 4. Seed Master Data (Position, Department, Priority, Company, Status Flow)
+
+`DataInitializer` seed แค่ admin user เท่านั้น ส่วนข้อมูลพื้นฐาน (ตำแหน่ง, แผนก, priority, บริษัท, status flow) ต้อง insert เองผ่าน SQL:
+
+```sql
+-- ตำแหน่ง (positions)
+INSERT INTO positions (id, name, created_at)
+VALUES
+    (gen_random_uuid(), 'Staff', now()),
+    (gen_random_uuid(), 'Senior Staff', now()),
+    (gen_random_uuid(), 'Team Lead', now()),
+    (gen_random_uuid(), 'Manager', now()),
+    (gen_random_uuid(), 'Senior Manager', now()),
+    (gen_random_uuid(), 'Director', now())
+ON CONFLICT (name) DO NOTHING;
+
+-- แผนก (departments)
+INSERT INTO departments (id, name, created_at)
+VALUES
+    (gen_random_uuid(), 'Information Technology', now()),
+    (gen_random_uuid(), 'Human Resources', now()),
+    (gen_random_uuid(), 'Finance', now()),
+    (gen_random_uuid(), 'Sales', now()),
+    (gen_random_uuid(), 'Marketing', now()),
+    (gen_random_uuid(), 'Customer Support', now())
+ON CONFLICT (name) DO NOTHING;
+
+-- บริษัท (companies)
+INSERT INTO companies (id, name, logo_image_url, status, created_at)
+VALUES
+    (gen_random_uuid(), 'Default Company', NULL, 'ACTIVE', now())
+ON CONFLICT (name) DO NOTHING;
+
+-- ระดับความสำคัญ (priority_levels)
+-- icon_shape: CIRCLE, TRIUP, TRIDOWN, ARROWUP, ARROWDOWN, CHEVRONUP, CHEVRONDOWN
+-- icon_color: BLUE, ORANGE, YELLOW, LIME, GREEN, RED, PINK
+-- interval_unit: MINUTE, HOUR, DAY, WEEK, MONTH, YEAR
+INSERT INTO priority_levels (id, name, description, icon_shape, icon_color, interval_value, interval_unit, created_at)
+VALUES
+    (gen_random_uuid(), 'Urgent',  'Critical issue, immediate attention required', 'ARROWUP',   'RED',    1, 'HOUR', now()),
+    (gen_random_uuid(), 'High',    'High priority, needs quick attention',         'CHEVRONUP', 'ORANGE', 4, 'HOUR', now()),
+    (gen_random_uuid(), 'Medium',  'Normal priority',                              'CIRCLE',    'YELLOW', 1, 'DAY',  now()),
+    (gen_random_uuid(), 'Low',     'Low priority, can be scheduled',               'CHEVRONDOWN','LIME',  3, 'DAY',  now()),
+    (gen_random_uuid(), 'Trivial', 'Minor issue, no urgency',                      'ARROWDOWN', 'BLUE',   7, 'DAY',  now())
+ON CONFLICT (name) DO NOTHING;
+
+-- Status Flow + Statuses
+-- group_code (EStatusGroup): START, PROCESS, SUCCESS, FAILED
+INSERT INTO status_flows (id, name, created_at)
+VALUES (gen_random_uuid(), 'Default Ticket Flow', now())
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO statuses (id, flow_id, group_code, name, sequence, is_system, created_at)
+SELECT gen_random_uuid(), f.id, v.group_code, v.name, v.sequence, v.is_system, now()
+FROM status_flows f
+CROSS JOIN (VALUES
+    ('START',   'Open',        1, true),
+    ('PROCESS', 'In Progress', 2, true),
+    ('PROCESS', 'On Hold',     3, false),
+    ('SUCCESS', 'Resolved',    4, true),
+    ('FAILED',  'Closed',      5, true)
+) AS v(group_code, name, sequence, is_system)
+WHERE f.name = 'Default Ticket Flow'
+ON CONFLICT DO NOTHING;
+```
+
+> ปรับชื่อ/ค่าตามจริงของแต่ละองค์กรได้ — สคริปต์ใช้ `ON CONFLICT (name) DO NOTHING` กันข้อมูลซ้ำ รันซ้ำได้ปลอดภัย
+
+---
+
 ## Environment Variables
 
 ### Production / Non-local

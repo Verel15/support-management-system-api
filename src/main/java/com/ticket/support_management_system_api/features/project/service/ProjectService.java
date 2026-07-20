@@ -131,14 +131,19 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public ProjectResponse findMyById(UUID id, JwtPrincipal user) {
         Project project = getOrThrow(id);
+        assertVisibleToCustomer(id, user);
+        return toResponse(project);
+    }
+
+    @Transactional(readOnly = true)
+    public void assertVisibleToCustomer(UUID projectId, JwtPrincipal user) {
         if (user.accountType() == AccountType.CUSTOMER) {
             UUID companyId = customerCompanyId(user.userId());
             List<UUID> memberProjectIds = nonEmpty(memberRepository.findProjectIdByUserIdAndArchivedAtIsNull(user.userId()));
-            if (!projectRepository.existsVisibleToCustomer(id, companyId, memberProjectIds)) {
-                throw new ResourceNotFoundException("ไม่พบโปรเจค id: " + id);
+            if (!projectRepository.existsVisibleToCustomer(projectId, companyId, memberProjectIds)) {
+                throw new ResourceNotFoundException("ไม่พบโปรเจค id: " + projectId);
             }
         }
-        return toResponse(project);
     }
 
     private UUID customerCompanyId(UUID userId) {

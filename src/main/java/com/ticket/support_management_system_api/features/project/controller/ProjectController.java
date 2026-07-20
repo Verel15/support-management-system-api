@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +33,7 @@ public class ProjectController {
     private final ReauthenticationService reauthenticationService;
 
     @GetMapping
+    @PreAuthorize("hasAuthority('PERM_allProjectAccess')")
     public ResponseEntity<ApiResponse<PageResponse<ProjectResponse>>> findAll(
             @ModelAttribute ProjectFilterRequest filter,
             Pageable pageable) {
@@ -39,16 +41,19 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_allProjectAccess')")
     public ResponseEntity<ApiResponse<ProjectResponse>> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(projectService.findById(id)));
     }
 
     @GetMapping("/{id}/ticket-stats")
+    @PreAuthorize("hasAuthority('PERM_allProjectAccess')")
     public ResponseEntity<ApiResponse<ProjectTicketStatsResponse>> getTicketStats(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(projectService.getTicketStats(id)));
     }
 
     @GetMapping("/{id}/tickets")
+    @PreAuthorize("hasAuthority('PERM_allProjectAccess')")
     public ResponseEntity<ApiResponse<PageResponse<TicketListResponse>>> findTicketsByProjectId(
             @PathVariable UUID id,
             @ModelAttribute TicketFilterRequest filter,
@@ -72,12 +77,14 @@ public class ProjectController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('PERM_manageProjectAccess')")
     public ResponseEntity<ApiResponse<ProjectResponse>> create(@Valid @RequestBody ProjectRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("สร้างโครงการสำเร็จ", projectService.create(request)));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_manageProjectAccess')")
     public ResponseEntity<ApiResponse<ProjectResponse>> update(
             @PathVariable UUID id,
             @Valid @RequestBody ProjectRequest request) {
@@ -85,6 +92,7 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_manageProjectAccess')")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID id,
             @Valid @RequestBody DeleteConfirmationRequest body,

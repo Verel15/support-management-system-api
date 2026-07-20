@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +28,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/companies")
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('PERM_manageCompanyAccess')")
 public class CompanyController {
 
     private final CompanyService companyService;

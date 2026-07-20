@@ -27,7 +27,7 @@ public class UserResponse {
     private UUID companyId;
     private String companyName;
 
-    // External details
+    // Staff details
     private UUID userTypeId;
     private String userTypeName;
     private UUID departmentId;

@@ -150,7 +150,7 @@ class ProjectServiceTest {
         stubProjectResponseLookups();
         when(projectRepository.findByIdAndArchivedAtIsNull(project.getId())).thenReturn(Optional.of(project));
 
-        JwtPrincipal staff = new JwtPrincipal(UUID.randomUUID(), "a@b.com", AccountType.EXTERNAL, UUID.randomUUID(), List.of());
+        JwtPrincipal staff = new JwtPrincipal(UUID.randomUUID(), "a@b.com", AccountType.STAFF, UUID.randomUUID(), List.of());
 
         var result = projectService.findMyById(project.getId(), staff);
 
@@ -181,7 +181,7 @@ class ProjectServiceTest {
         Page<Project> page = new PageImpl<>(List.of(project));
         when(projectRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
 
-        JwtPrincipal staff = new JwtPrincipal(UUID.randomUUID(), "a@b.com", AccountType.EXTERNAL, UUID.randomUUID(), List.of());
+        JwtPrincipal staff = new JwtPrincipal(UUID.randomUUID(), "a@b.com", AccountType.STAFF, UUID.randomUUID(), List.of());
 
         var result = projectService.findMy(new ProjectFilterRequest(), PageRequest.of(0, 10), staff);
 

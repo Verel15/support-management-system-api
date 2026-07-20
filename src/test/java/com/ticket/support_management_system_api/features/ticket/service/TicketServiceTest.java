@@ -152,7 +152,7 @@ class TicketServiceTest {
         when(ticketRepository.findByIdAndArchivedAtIsNull(ticket.getId())).thenReturn(Optional.of(ticket));
         when(ticketAssigneeRepository.findAllByTicketIdAndArchivedAtIsNull(ticket.getId())).thenReturn(List.of());
 
-        JwtPrincipal staff = new JwtPrincipal(otherUserId, "a@b.com", AccountType.EXTERNAL, UUID.randomUUID(), List.of());
+        JwtPrincipal staff = new JwtPrincipal(otherUserId, "a@b.com", AccountType.STAFF, UUID.randomUUID(), List.of());
 
         var result = ticketService.findMyById(ticket.getId(), staff);
 

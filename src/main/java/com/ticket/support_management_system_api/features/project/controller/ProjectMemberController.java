@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +33,7 @@ public class ProjectMemberController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('PERM_manageProjectAccess')")
     public ResponseEntity<ApiResponse<ProjectMemberResponse>> addMember(
             @PathVariable UUID projectId,
             @Valid @RequestBody ProjectMemberRequest request) {
@@ -40,6 +42,7 @@ public class ProjectMemberController {
     }
 
     @DeleteMapping("/{memberId}")
+    @PreAuthorize("hasAuthority('PERM_manageProjectAccess')")
     public ResponseEntity<ApiResponse<Void>> removeMember(
             @PathVariable UUID projectId,
             @PathVariable UUID memberId,

@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,10 +32,11 @@ public class ProjectDocumentController {
     public ResponseEntity<ApiResponse<List<ProjectDocumentResponse>>> findAll(
             @PathVariable UUID projectId,
             @AuthenticationPrincipal JwtPrincipal user) {
-        return ResponseEntity.ok(ApiResponse.success(documentService.findAllByProject(projectId)));
+        return ResponseEntity.ok(ApiResponse.success(documentService.findAllByProject(projectId, user)));
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('PERM_manageProjectAccess')")
     public ResponseEntity<ApiResponse<ProjectDocumentResponse>> upload(
             @PathVariable UUID projectId,
             @RequestParam("file") MultipartFile file,
@@ -44,6 +46,7 @@ public class ProjectDocumentController {
     }
 
     @DeleteMapping("/{documentId}")
+    @PreAuthorize("hasAuthority('PERM_manageProjectAccess')")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID projectId,
             @PathVariable UUID documentId,

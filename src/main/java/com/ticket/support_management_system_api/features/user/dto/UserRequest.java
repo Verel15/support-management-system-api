@@ -31,7 +31,7 @@ public class UserRequest {
     // For CUSTOMER
     private UUID companyId;
 
-    // For EXTERNAL
+    // For STAFF
     private UUID userTypeId;
     private UUID departmentId;
     private UUID positionId;

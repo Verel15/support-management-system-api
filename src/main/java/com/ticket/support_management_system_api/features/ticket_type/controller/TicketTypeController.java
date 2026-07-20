@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -58,12 +59,14 @@ public class TicketTypeController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAuthority('PERM_manageDataAccess')")
     public ResponseEntity<ApiResponse<TicketTypeResponse>> create(@Valid @RequestBody TicketTypeRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("สร้างประเภทตั๋วสำเร็จ", ticketTypeService.create(request)));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_manageDataAccess')")
     public ResponseEntity<ApiResponse<TicketTypeResponse>> update(
             @PathVariable UUID id,
             @Valid @RequestBody TicketTypeRequest request) {
@@ -71,6 +74,7 @@ public class TicketTypeController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('PERM_manageDataAccess')")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID id,
             @Valid @RequestBody DeleteConfirmationRequest body,
