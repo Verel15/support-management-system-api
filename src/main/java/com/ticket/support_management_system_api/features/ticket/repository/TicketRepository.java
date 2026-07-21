@@ -59,11 +59,27 @@ public interface TicketRepository extends JpaRepository<Ticket, UUID>, JpaSpecif
     @Query("""
             SELECT t FROM Ticket t
             WHERE t.archivedAt IS NULL
-              AND t.project.company.id = :companyId
+              AND t.requester.id = :requesterId
               AND LOWER(t.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
             ORDER BY t.createdAt DESC
             """)
-    List<Ticket> searchByTitleAndCompanyId(@Param("keyword") String keyword,
-                                            @Param("companyId") UUID companyId,
-                                            org.springframework.data.domain.Pageable pageable);
+    List<Ticket> searchByTitleAndRequesterId(@Param("keyword") String keyword,
+                                              @Param("requesterId") UUID requesterId,
+                                              org.springframework.data.domain.Pageable pageable);
+
+    @Query("""
+            SELECT t FROM Ticket t
+            WHERE t.archivedAt IS NULL
+              AND LOWER(t.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+              AND (
+                    t.requester.id = :staffId
+                 OR t.project.id IN :memberProjectIds
+                 OR t.id IN (SELECT ta.ticket.id FROM TicketAssignee ta WHERE ta.archivedAt IS NULL AND ta.user.id = :staffId)
+              )
+            ORDER BY t.createdAt DESC
+            """)
+    List<Ticket> searchByTitleForStaff(@Param("keyword") String keyword,
+                                        @Param("staffId") UUID staffId,
+                                        @Param("memberProjectIds") List<UUID> memberProjectIds,
+                                        org.springframework.data.domain.Pageable pageable);
 }

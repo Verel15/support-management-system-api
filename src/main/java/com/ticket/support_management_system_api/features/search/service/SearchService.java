@@ -4,6 +4,7 @@ import com.ticket.support_management_system_api.common.enums.AccountType;
 import com.ticket.support_management_system_api.common.exception.BadRequestException;
 import com.ticket.support_management_system_api.features.auth.model.JwtPrincipal;
 import com.ticket.support_management_system_api.features.project.entities.Project;
+import com.ticket.support_management_system_api.features.project.repository.ProjectMemberRepository;
 import com.ticket.support_management_system_api.features.project.repository.ProjectRepository;
 import com.ticket.support_management_system_api.features.search.dto.SearchResult;
 import com.ticket.support_management_system_api.features.search.dto.SearchResultType;
@@ -35,6 +36,7 @@ public class SearchService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final CustomerDetailsRepository customerDetailsRepository;
+    private final ProjectMemberRepository projectMemberRepository;
 
     public List<SearchResult> search(String q, List<SearchResultType> types, int limit, JwtPrincipal user) {
         if (q == null || q.isBlank()) {
@@ -42,34 +44,36 @@ public class SearchService {
         }
         String keyword = q.trim();
         Pageable pageable = PageRequest.of(0, limit);
-        UUID companyId = resolveCustomerCompanyId(user);
 
         List<SearchResult> results = new ArrayList<>();
         if (types.contains(SearchResultType.TICKET)) {
-            results.addAll(searchTickets(keyword, companyId, pageable));
+            results.addAll(searchTickets(keyword, pageable, user));
         }
         if (types.contains(SearchResultType.PROJECT)) {
-            results.addAll(searchProjects(keyword, companyId, pageable));
+            results.addAll(searchProjects(keyword, pageable, user));
         }
         if (types.contains(SearchResultType.USER)) {
-            results.addAll(searchUsers(keyword, companyId, pageable));
+            results.addAll(searchUsers(keyword, pageable, user));
         }
         return results;
     }
 
     private UUID resolveCustomerCompanyId(JwtPrincipal user) {
-        if (user.accountType() != AccountType.CUSTOMER) {
-            return null;
-        }
         CustomerDetails details = customerDetailsRepository.findByUserId(user.userId())
                 .orElseThrow(() -> new BadRequestException("ไม่พบข้อมูลบริษัทของผู้ใช้"));
         return details.getCompany().getId();
     }
 
-    private List<SearchResult> searchTickets(String keyword, UUID companyId, Pageable pageable) {
-        List<Ticket> tickets = companyId == null
-                ? ticketRepository.searchByTitle(keyword, pageable)
-                : ticketRepository.searchByTitleAndCompanyId(keyword, companyId, pageable);
+    private List<UUID> resolveStaffProjectIds(JwtPrincipal user) {
+        return projectMemberRepository.findProjectIdByUserIdAndArchivedAtIsNull(user.userId());
+    }
+
+    private List<SearchResult> searchTickets(String keyword, Pageable pageable, JwtPrincipal user) {
+        List<Ticket> tickets = switch (user.accountType()) {
+            case ADMIN -> ticketRepository.searchByTitle(keyword, pageable);
+            case CUSTOMER -> ticketRepository.searchByTitleAndRequesterId(keyword, user.userId(), pageable);
+            case STAFF -> ticketRepository.searchByTitleForStaff(keyword, user.userId(), resolveStaffProjectIds(user), pageable);
+        };
 
         return tickets.stream().map(t -> SearchResult.builder()
                 .type(SearchResultType.TICKET)
@@ -81,10 +85,12 @@ public class SearchService {
                 .toList();
     }
 
-    private List<SearchResult> searchProjects(String keyword, UUID companyId, Pageable pageable) {
-        List<Project> projects = companyId == null
-                ? projectRepository.searchByName(keyword, pageable)
-                : projectRepository.searchByNameAndCompanyId(keyword, companyId, pageable);
+    private List<SearchResult> searchProjects(String keyword, Pageable pageable, JwtPrincipal user) {
+        List<Project> projects = switch (user.accountType()) {
+            case ADMIN -> projectRepository.searchByName(keyword, pageable);
+            case CUSTOMER -> projectRepository.searchByNameAndCompanyId(keyword, resolveCustomerCompanyId(user), pageable);
+            case STAFF -> projectRepository.searchByNameAndProjectIds(keyword, resolveStaffProjectIds(user), pageable);
+        };
 
         return projects.stream().map(p -> {
             long ticketCount = ticketRepository.countByProjectIdAndArchivedAtIsNull(p.getId());
@@ -98,10 +104,12 @@ public class SearchService {
         }).toList();
     }
 
-    private List<SearchResult> searchUsers(String keyword, UUID companyId, Pageable pageable) {
-        List<User> users = companyId == null
-                ? userRepository.searchByName(keyword, pageable)
-                : userRepository.searchByNameAndCompanyId(keyword, companyId, pageable);
+    private List<SearchResult> searchUsers(String keyword, Pageable pageable, JwtPrincipal user) {
+        List<User> users = switch (user.accountType()) {
+            case ADMIN -> userRepository.searchByName(keyword, pageable);
+            case CUSTOMER -> userRepository.searchByNameAndCompanyId(keyword, resolveCustomerCompanyId(user), pageable);
+            case STAFF -> userRepository.searchByNameAndProjectIds(keyword, resolveStaffProjectIds(user), pageable);
+        };
 
         return users.stream().map(u -> SearchResult.builder()
                 .type(SearchResultType.USER)

@@ -38,10 +38,24 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
               AND (
                     u.id IN (SELECT cd.user.id FROM CustomerDetails cd WHERE cd.company.id = :companyId)
                  OR u.id IN (SELECT ta.user.id FROM TicketAssignee ta WHERE ta.archivedAt IS NULL AND ta.ticket.project.company.id = :companyId)
+                 OR u.id IN (SELECT pm.user.id FROM ProjectMember pm WHERE pm.archivedAt IS NULL AND pm.project.company.id = :companyId)
               )
             ORDER BY u.createdAt DESC
             """)
     List<User> searchByNameAndCompanyId(@Param("keyword") String keyword,
                                          @Param("companyId") UUID companyId,
                                          Pageable pageable);
+
+    @Query("""
+            SELECT u FROM User u
+            WHERE u.archivedAt IS NULL
+              AND (LOWER(u.firstName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE LOWER(CONCAT('%', :keyword, '%')))
+              AND u.id IN (SELECT pm.user.id FROM ProjectMember pm WHERE pm.archivedAt IS NULL AND pm.project.id IN :memberProjectIds)
+            ORDER BY u.createdAt DESC
+            """)
+    List<User> searchByNameAndProjectIds(@Param("keyword") String keyword,
+                                          @Param("memberProjectIds") List<UUID> memberProjectIds,
+                                          Pageable pageable);
 }

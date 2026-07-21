@@ -40,4 +40,15 @@ public interface ProjectRepository extends JpaRepository<Project, UUID>, JpaSpec
     List<Project> searchByNameAndCompanyId(@Param("keyword") String keyword,
                                             @Param("companyId") UUID companyId,
                                             Pageable pageable);
+
+    @Query("""
+            SELECT p FROM Project p
+            WHERE p.archivedAt IS NULL
+              AND p.id IN :memberProjectIds
+              AND LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+            ORDER BY p.createdAt DESC
+            """)
+    List<Project> searchByNameAndProjectIds(@Param("keyword") String keyword,
+                                             @Param("memberProjectIds") List<UUID> memberProjectIds,
+                                             Pageable pageable);
 }
