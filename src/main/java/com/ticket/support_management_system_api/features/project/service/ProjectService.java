@@ -70,8 +70,9 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public ProjectTicketStatsResponse getTicketStats(UUID id) {
+    public ProjectTicketStatsResponse getTicketStats(UUID id, JwtPrincipal user) {
         getOrThrow(id);
+        assertVisibleToCustomer(id, user);
 
         Map<EStatusGroup, Long> counts = new EnumMap<>(EStatusGroup.class);
         for (EStatusGroup group : EStatusGroup.values()) {

@@ -47,9 +47,11 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}/ticket-stats")
-    @PreAuthorize("hasAuthority('PERM_allProjectAccess')")
-    public ResponseEntity<ApiResponse<ProjectTicketStatsResponse>> getTicketStats(@PathVariable UUID id) {
-        return ResponseEntity.ok(ApiResponse.success(projectService.getTicketStats(id)));
+    @PreAuthorize("hasAuthority('PERM_allProjectAccess') or hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<ProjectTicketStatsResponse>> getTicketStats(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal JwtPrincipal user) {
+        return ResponseEntity.ok(ApiResponse.success(projectService.getTicketStats(id, user)));
     }
 
     @GetMapping("/{id}/tickets")
