@@ -24,6 +24,7 @@ import com.ticket.support_management_system_api.features.ticket.dto.*;
 import com.ticket.support_management_system_api.features.ticket.entities.Ticket;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketAssignee;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketAssigneeLog;
+import com.ticket.support_management_system_api.features.ticket.entities.TicketSatisfaction;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketStatusLog;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketUpdateLog;
 import com.ticket.support_management_system_api.features.ticket.entities.TicketYearCounter;
@@ -32,6 +33,7 @@ import com.ticket.support_management_system_api.features.ticket.enums.ETicketAss
 import com.ticket.support_management_system_api.features.ticket.repository.TicketAssigneeLogRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketAssigneeRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketRepository;
+import com.ticket.support_management_system_api.features.ticket.repository.TicketSatisfactionRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketStatusLogRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketUpdateLogRepository;
 import com.ticket.support_management_system_api.features.ticket.repository.TicketYearCounterRepository;
@@ -76,6 +78,7 @@ public class TicketService {
     private final StaffDetailsRepository staffDetailsRepository;
     private final TicketAssigneeLogRepository ticketAssigneeLogRepository;
     private final TicketUpdateLogRepository ticketUpdateLogRepository;
+    private final TicketSatisfactionRepository ticketSatisfactionRepository;
 
     private static final List<EStatusGroup> CLOSED_STATUS_GROUPS = List.of(EStatusGroup.SUCCESS, EStatusGroup.FAILED);
 
@@ -642,6 +645,34 @@ public class TicketService {
                         .profileImageUrl(a.getUser().getProfileImageUrl())
                         .assignedAt(a.getCreatedAt())
                         .build()).toList())
+                .satisfactionRating(ticketSatisfactionRepository.findByTicketId(ticket.getId())
+                        .map(this::toSatisfactionResponse)
+                        .orElse(null))
                 .build();
+    }
+
+    private TicketSatisfactionResponse toSatisfactionResponse(TicketSatisfaction satisfaction) {
+        return TicketSatisfactionResponse.builder()
+                .score(satisfaction.getScore())
+                .comment(satisfaction.getComment())
+                .ratedAt(satisfaction.getRatedAt())
+                .build();
+    }
+
+    public TicketSatisfactionResponse addSatisfactionRating(UUID id, AddSatisfactionRatingRequest request) {
+        Ticket ticket = getOrThrow(id);
+
+        if (ticket.getCurrentStatus().getGroup() != EStatusGroup.SUCCESS) {
+            throw new BadRequestException("สามารถให้คะแนนความพึงพอใจได้เฉพาะ Ticket ที่ปิดงานสำเร็จแล้ว");
+        }
+
+        TicketSatisfaction satisfaction = ticketSatisfactionRepository.findByTicketId(id)
+                .orElseGet(() -> TicketSatisfaction.builder().ticket(ticket).build());
+        satisfaction.setScore(request.getScore());
+        satisfaction.setComment(request.getComment());
+        satisfaction.setRatedAt(LocalDateTime.now());
+        satisfaction = ticketSatisfactionRepository.save(satisfaction);
+
+        return toSatisfactionResponse(satisfaction);
     }
 }

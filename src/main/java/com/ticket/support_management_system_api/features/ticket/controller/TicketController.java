@@ -15,7 +15,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,7 +30,6 @@ public class TicketController {
     private final ReauthenticationService reauthenticationService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('PERM_allTicketAccess')")
     public ResponseEntity<ApiResponse<PageResponse<TicketListResponse>>> findAll(
             @ModelAttribute TicketFilterRequest filter,
             @RequestParam(defaultValue = "0") int page,
@@ -41,7 +39,6 @@ public class TicketController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('PERM_allTicketAccess')")
     public ResponseEntity<ApiResponse<TicketDetailResponse>> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(ticketService.findById(id)));
     }
@@ -72,7 +69,6 @@ public class TicketController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('PERM_allTicketAccess')")
     public ResponseEntity<ApiResponse<TicketDetailResponse>> update(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateTicketRequest request,
@@ -81,7 +77,6 @@ public class TicketController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('PERM_allTicketAccess')")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable UUID id,
             @Valid @RequestBody DeleteConfirmationRequest body,
@@ -93,19 +88,16 @@ public class TicketController {
     }
 
     @GetMapping("/{id}/suggested-assignee")
-    @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<SuggestedAssigneeResponse>> suggestedAssignee(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(ticketService.getSuggestedAssignee(id)));
     }
 
     @GetMapping("/{id}/rebalance-suggestion")
-    @PreAuthorize("hasRole('STAFF') or hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<RebalanceSuggestionResponse>> rebalanceSuggestion(@PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.success(rebalanceSuggestionService.getSuggestion(id)));
     }
 
     @PostMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('PERM_allTicketAccess')")
     public ResponseEntity<ApiResponse<TicketDetailResponse>> changeStatus(
             @PathVariable UUID id,
             @Valid @RequestBody ChangeTicketStatusRequest request,
@@ -114,11 +106,17 @@ public class TicketController {
     }
 
     @PatchMapping("/{id}/due-date")
-    @PreAuthorize("hasAuthority('PERM_allTicketAccess')")
     public ResponseEntity<ApiResponse<TicketDetailResponse>> updateDueDate(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateTicketDueDateRequest request,
             @AuthenticationPrincipal JwtPrincipal user) {
         return ResponseEntity.ok(ApiResponse.success("อัปเดตครบกำหนด Ticket สำเร็จ", ticketService.updateDueDate(id, request, user.userId())));
+    }
+
+    @PostMapping("/{id}/satisfaction")
+    public ResponseEntity<ApiResponse<TicketSatisfactionResponse>> addSatisfactionRating(
+            @PathVariable UUID id,
+            @Valid @RequestBody AddSatisfactionRatingRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("บันทึกคะแนนความพึงพอใจสำเร็จ", ticketService.addSatisfactionRating(id, request)));
     }
 }

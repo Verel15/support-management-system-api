@@ -49,4 +49,6 @@ public class TicketDetailResponse {
     private String requesterProfileImageUrl;
 
     private List<TicketAssigneeResponse> assignees;
+
+    private TicketSatisfactionResponse satisfactionRating;
 }
